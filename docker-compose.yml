@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mysql:latest
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ctv_django
+      MYSQL_DATABASE: ctv
+      MYSQL_USER: ctv_django
+      MYSQL_PASSWORD: ctv_django
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

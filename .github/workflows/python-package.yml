@@ -1,0 +1,91 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: ctv
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+defaults:
+  run:
+    working-directory: ./
+jobs:
+
+  run_pre_commit:
+    name: Run pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Run pre-commit
+        run: pre-commit run --all-files
+
+  check_missing_migrations:
+    name: Check missing migrations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Check missing migrations
+        env:
+          DJANGO_SETTINGS_MODULE: ctv.settings.ci
+        working-directory: ./
+        run: python manage.py makemigrations --dry-run --check --no-input
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10"]
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_DATABASE: ctv
+          MYSQL_USER: ctv_django
+          MYSQL_PASSWORD: ctv_django
+          MYSQL_ROOT_PASSWORD: ctv_django
+        ports:
+          - 3306:3306
+        # Ensure the runner waits until MySQL is fully initialized before starting steps
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Test with pytest
+      env:
+        DJANGO_SETTINGS_MODULE: ctv.settings.ci
+      run: |
+        pytest
