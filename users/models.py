@@ -9,5 +9,5 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     user_type = models.PositiveSmallIntegerField(choices=UserType.choices)
     objects = UserManager()
-    USERNAME_FIELD = 'email' # Identifies user via email
-    REQUIRED_FIELDS = [] # Additional fields for createsuperuser
+    USERNAME_FIELD = "email"  # Identifies user via email
+    REQUIRED_FIELDS = []  # Additional fields for createsuperuser
