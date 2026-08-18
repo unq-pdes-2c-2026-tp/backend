@@ -19,6 +19,12 @@ source .venv/bin/activate
 pip install -r requirements.txt  # use requirements-dev.txt for development
 ```
 
+### Install pre-commit (development)
+```bash
+pre-commit install
+pre-commit install-hooks
+```
+
 ## Run the project
 
 ### Run the services
