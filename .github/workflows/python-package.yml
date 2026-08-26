@@ -28,23 +28,18 @@ jobs:
       - name: Run pre-commit
         run: pre-commit run --all-files
 
-  check_missing_migrations:
-    name: Check missing migrations
+  django_checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-        with:
-          python-version: "3.10"
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
-      - name: Check missing migrations
-        env:
-          DJANGO_SETTINGS_MODULE: ctv.settings.ci
-        working-directory: ./
-        run: python manage.py makemigrations --dry-run --check --no-input
-  build:
+    - uses: actions/checkout@v4
+    - name: Start Docker Compose services
+      run: docker compose up -d --build
+    - name: Run django checks
+      run: docker compose exec ctv python manage.py check --fail-level=WARNING
+    - name: Check missing migrations
+      run: docker compose exec ctv python manage.py makemigrations --dry-run --check --no-input
+
+  test:
 
     runs-on: ubuntu-latest
     strategy:
