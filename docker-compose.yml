@@ -11,6 +11,26 @@ services:
       MYSQL_PASSWORD: ctv_django
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pctv_django" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
+  ctv:
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:4000"
+    ports:
+      - "4000:4000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=ctv
+      - DB_USER=ctv_django
+      - DB_PASSWORD=ctv_django
+    depends_on:
+      db:
+          condition: service_healthy
 volumes:
   mysql_data:
