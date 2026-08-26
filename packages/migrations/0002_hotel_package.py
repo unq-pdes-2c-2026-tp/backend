@@ -5,34 +5,63 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('packages', '0001_initial'),
+        ("packages", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Hotel',
+            name="Hotel",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Package',
+            name="Package",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('outbound_flight_id', models.PositiveIntegerField()),
-                ('return_flight_id', models.PositiveIntegerField()),
-                ('name', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True)),
-                ('price', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('agency', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='packages', to='packages.agency')),
-                ('hotel', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='packages', to='packages.hotel')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("outbound_flight_id", models.PositiveIntegerField()),
+                ("return_flight_id", models.PositiveIntegerField()),
+                ("name", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True)),
+                ("price", models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "agency",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="packages",
+                        to="packages.agency",
+                    ),
+                ),
+                (
+                    "hotel",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="packages",
+                        to="packages.hotel",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-id'],
+                "ordering": ["-id"],
             },
         ),
     ]
