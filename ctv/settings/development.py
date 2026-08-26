@@ -1,3 +1,5 @@
+import os
+
 from ctv.settings.base import *  # noqa F403
 
 
@@ -16,10 +18,10 @@ ALLOWED_HOSTS = []
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "ctv",
-        "USER": "ctv_django",
-        "PASSWORD": "ctv_django",
-        "HOST": "127.0.0.1",  # Use 'localhost' or your server's IP address
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USER"],
+        "PASSWORD": os.environ["DB_PASSWORD"],
+        "HOST": os.environ["DB_HOST"],
         "PORT": "3306",  # Default MySQL port
         "OPTIONS": {
             "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
