@@ -18,15 +18,9 @@ class Hotel(models.Model):
 
 class Package(models.Model):
     agency = models.ForeignKey(
-        Agency,
-        on_delete=models.PROTECT,
-        related_name="packages",
+        Agency, on_delete=models.CASCADE, related_name="packages"
     )
-    hotel = models.ForeignKey(
-        Hotel,
-        on_delete=models.PROTECT,
-        related_name="packages",
-    )
+    hotel = models.ForeignKey(Hotel, on_delete=models.CASCADE, related_name="packages")
     outbound_flight_id = models.PositiveIntegerField()
     return_flight_id = models.PositiveIntegerField()
     name = models.CharField(max_length=255)
