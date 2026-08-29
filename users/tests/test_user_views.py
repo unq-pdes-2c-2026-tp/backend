@@ -2,12 +2,32 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.test import APIClient
 
 from packages.tests.factories import AgencyFactory
 from test_utils.views import post
 from users.constants import UserType
 
 User = get_user_model()
+
+
+@pytest.mark.django_db
+def test_post_user_allows_frontend_origin():
+    client = APIClient()
+    response = client.post(
+        reverse("user-list"),
+        {
+            "email": "test@mail.com",
+            "user_type": UserType.END_USER.value,
+            "name": "pepe",
+            "password": "contra-seña",
+        },
+        HTTP_ORIGIN="http://localhost:5173",
+        format="json",
+    )
+
+    assert response.status_code == HTTP_201_CREATED
+    assert response["Access-Control-Allow-Origin"] == "http://localhost:5173"
 
 
 @pytest.mark.django_db
