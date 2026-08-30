@@ -6,4 +6,6 @@ from users.views import UserViewSet, LoginView
 router = routers.SimpleRouter()
 router.register(r"users", UserViewSet)
 
-urlpatterns = [path("login/", LoginView.as_view())] + router.urls
+urlpatterns = [
+    path("login/", LoginView.as_view()),
+] + router.urls

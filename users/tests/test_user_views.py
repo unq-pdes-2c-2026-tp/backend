@@ -1,9 +1,5 @@
-import io
-
 import pytest
-from PIL import Image
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework.test import APIClient
@@ -11,21 +7,9 @@ from rest_framework.test import APIClient
 from packages.tests.factories import AgencyFactory
 from test_utils.views import post, get
 from users.constants import UserType
-
+from users.tests.utils import make_image
 
 User = get_user_model()
-
-
-def image():
-    image_file = io.BytesIO()
-    image = Image.new("RGB", (100, 100), "white")
-    image.save(image_file, "jpeg")
-    image_file.seek(0)
-
-    django_file = SimpleUploadedFile(
-        name="test_image.jpg", content=image_file.read(), content_type="image/jpeg"
-    )
-    return django_file
 
 
 @pytest.mark.django_db
@@ -158,7 +142,7 @@ def test_get_user_with_profile_picture():
         password="123",
         name="Pep",
         user_type=UserType.END_USER.value,
-        profile_picture=image(),
+        profile_picture=make_image(),
     )
     response = get(
         reverse("user-detail", kwargs={"pk": user.id}),

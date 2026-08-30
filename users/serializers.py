@@ -74,3 +74,10 @@ class UserLoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "name", "email", "user_type", "agency")
+
+
+class ProfilePictureSerializer(serializers.Serializer):
+    profile_picture = serializers.ImageField(
+        allow_null=True,
+        required=True,
+    )
