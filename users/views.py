@@ -6,7 +6,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 
 from users.managers import UserManager
-from users.serializers import UserSerializer, LoginSerializer
+from users.serializers import UserSerializer, LoginSerializer, UserLoginSerializer
 
 User = get_user_model()
 
@@ -31,5 +31,5 @@ class LoginView(ObtainAuthToken):
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
         return Response(
-            {"id": user.pk, "email": user.email}, headers={"Authentication": token.key}
+            UserLoginSerializer(user).data, headers={"Authentication": token.key}
         )
