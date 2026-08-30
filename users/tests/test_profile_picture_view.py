@@ -28,6 +28,7 @@ def test_post_profile_picture():
 
     user.refresh_from_db()
     assert user.profile_picture
+    user.profile_picture.delete()
 
 
 @pytest.mark.django_db
