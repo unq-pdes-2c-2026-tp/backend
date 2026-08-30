@@ -18,7 +18,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "name", "email", "password", "user_type", "agency")
+        fields = (
+            "id",
+            "name",
+            "email",
+            "password",
+            "user_type",
+            "agency",
+            "profile_picture",
+        )
 
     def validate(self, data):
         user_type = data.get("user_type", None)

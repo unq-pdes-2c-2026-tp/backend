@@ -1,9 +1,8 @@
 from django.contrib.auth import get_user_model
-from rest_framework.mixins import CreateModelMixin
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
 from users.managers import UserManager
 from users.serializers import UserSerializer, LoginSerializer, UserLoginSerializer
@@ -11,7 +10,7 @@ from users.serializers import UserSerializer, LoginSerializer, UserLoginSerializ
 User = get_user_model()
 
 
-class UserViewSet(CreateModelMixin, GenericViewSet):
+class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
 
