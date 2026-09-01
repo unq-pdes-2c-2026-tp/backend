@@ -18,7 +18,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("name", "email", "password", "user_type", "agency")
+        fields = (
+            "id",
+            "name",
+            "email",
+            "password",
+            "user_type",
+            "agency",
+            "profile_picture",
+        )
 
     def validate(self, data):
         user_type = data.get("user_type", None)
@@ -56,3 +64,20 @@ class LoginSerializer(serializers.Serializer):
 
         attrs["user"] = user
         return attrs
+
+
+class UserLoginSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=50, read_only=True)
+    email = serializers.EmailField(read_only=True)
+    user_type = serializers.ChoiceField(choices=UserType.choices, read_only=True)
+
+    class Meta:
+        model = User
+        fields = ("id", "name", "email", "user_type", "agency")
+
+
+class ProfilePictureSerializer(serializers.Serializer):
+    profile_picture = serializers.ImageField(
+        allow_null=True,
+        required=True,
+    )

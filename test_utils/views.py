@@ -1,14 +1,18 @@
 from rest_framework.test import APIClient
 
 
-def post(url, data, fmt="json"):
+def post(url, data, fmt="json", user=None):
     client = APIClient()
+    if user:
+        client.force_authenticate(user)
     response = client.post(url, data, format=fmt)
     return response
 
 
-def delete(url):
+def delete(url, user=None):
     client = APIClient()
+    if user:
+        client.force_authenticate(user)
     response = client.delete(url)
     return response
 

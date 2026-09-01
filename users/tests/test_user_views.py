@@ -1,12 +1,13 @@
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework.test import APIClient
 
 from packages.tests.factories import AgencyFactory
-from test_utils.views import post
+from test_utils.views import post, get
 from users.constants import UserType
+from users.tests.utils import make_image
 
 User = get_user_model()
 
@@ -109,3 +110,50 @@ def test_post_user_is_created_with_agency_related():
         agency=agency,
     )
     assert qs.exists()
+
+
+@pytest.mark.django_db
+def test_get_user():
+    user = User.objects.create_user(
+        email="test@mail.com",
+        password="123",
+        name="Pep",
+        user_type=UserType.END_USER.value,
+    )
+    response = get(
+        reverse("user-detail", kwargs={"pk": user.id}),
+    )
+
+    assert response.status_code == HTTP_200_OK
+    assert response.json() == {
+        "id": user.pk,
+        "name": "Pep",
+        "email": "test@mail.com",
+        "user_type": user.user_type,
+        "agency": None,
+        "profile_picture": None,
+    }
+
+
+@pytest.mark.django_db
+def test_get_user_with_profile_picture():
+    user = User.objects.create_user(
+        email="test@mail.com",
+        password="123",
+        name="Pep",
+        user_type=UserType.END_USER.value,
+        profile_picture=make_image(),
+    )
+    response = get(
+        reverse("user-detail", kwargs={"pk": user.id}),
+    )
+    user.profile_picture.delete()
+    assert response.status_code == HTTP_200_OK
+    assert response.json() == {
+        "id": user.pk,
+        "name": "Pep",
+        "email": "test@mail.com",
+        "user_type": user.user_type,
+        "agency": None,
+        "profile_picture": "http://testserver/test_image.jpg",
+    }
