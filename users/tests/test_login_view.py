@@ -39,4 +39,5 @@ def test_login_with_valid_credentials_response_headers():
     response = post("/api/login/", {"email": "test@mail.com", "password": "123"})
 
     assert response.status_code == HTTP_200_OK
-    assert "authentication" in response.headers
+    assert "authorization" in response.headers
+    assert response.headers["authorization"].startswith("Token ")
