@@ -17,6 +17,22 @@ def delete(url, user=None):
     return response
 
 
+def patch(url, data, fmt="json", user=None):
+    client = APIClient()
+    if user:
+        client.force_authenticate(user)
+    response = client.patch(url, data=data, format=fmt)
+    return response
+
+
+def put(url, data, fmt="json", user=None):
+    client = APIClient()
+    if user:
+        client.force_authenticate(user)
+    response = client.put(url, data=data, format=fmt)
+    return response
+
+
 def get(url, params=None):
     params = params or {}
 
