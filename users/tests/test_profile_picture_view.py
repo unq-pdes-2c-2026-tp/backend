@@ -11,24 +11,18 @@ User = get_user_model()
 
 
 @pytest.mark.django_db
-def test_post_profile_picture():
-    user = User.objects.create_user(
-        email="test@mail.com",
-        password="123",
-        name="Pep",
-        user_type=UserType.END_USER.value,
-    )
+def test_post_profile_picture(end_user):
     response = post(
         "/api/users/profile-picture/",
         {"profile_picture": make_image()},
         fmt="multipart",
-        user=user,
+        user=end_user,
     )
     assert response.status_code == HTTP_200_OK
 
-    user.refresh_from_db()
-    assert user.profile_picture
-    user.profile_picture.delete()
+    end_user.refresh_from_db()
+    assert end_user.profile_picture
+    end_user.profile_picture.delete()
 
 
 @pytest.mark.django_db
@@ -48,12 +42,6 @@ def test_delete_profile_picture():
 
 
 @pytest.mark.django_db
-def test_delete_profile_picture_when_user_has_no_profile_picture():
-    user = User.objects.create_user(
-        email="test@mail.com",
-        password="123",
-        name="Pep",
-        user_type=UserType.END_USER.value,
-    )
-    response = delete("/api/users/profile-picture/", user=user)
+def test_delete_profile_picture_when_user_has_no_profile_picture(end_user):
+    response = delete("/api/users/profile-picture/", user=end_user)
     assert response.status_code == HTTP_404_NOT_FOUND

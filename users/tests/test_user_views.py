@@ -52,13 +52,7 @@ def test_post_user_creates_user():
 
 
 @pytest.mark.django_db
-def test_post_user_fails_when_user_with_the_same_mail_exists():
-    User.objects.create_user(
-        email="test@mail.com",
-        password="123",
-        name="Pep",
-        user_type=UserType.END_USER.value,
-    )
+def test_post_user_fails_when_user_with_the_same_mail_exists(end_user):
     response = post(
         reverse("user-list"),
         {
@@ -113,23 +107,17 @@ def test_post_user_is_created_with_agency_related():
 
 
 @pytest.mark.django_db
-def test_get_user():
-    user = User.objects.create_user(
-        email="test@mail.com",
-        password="123",
-        name="Pep",
-        user_type=UserType.END_USER.value,
-    )
+def test_get_user(end_user):
     response = get(
-        reverse("user-detail", kwargs={"pk": user.id}),
+        reverse("user-detail", kwargs={"pk": end_user.id}),
     )
 
     assert response.status_code == HTTP_200_OK
     assert response.json() == {
-        "id": user.pk,
+        "id": end_user.pk,
         "name": "Pep",
         "email": "test@mail.com",
-        "user_type": user.user_type,
+        "user_type": end_user.user_type,
         "agency": None,
         "profile_picture": None,
     }
