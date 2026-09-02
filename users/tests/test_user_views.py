@@ -141,5 +141,5 @@ def test_get_user_with_profile_picture():
         "email": "test@mail.com",
         "user_type": user.user_type,
         "agency": None,
-        "profile_picture": "http://testserver/test_image.jpg",
+        "profile_picture": "http://testserver/media/test_image.jpg",
     }
