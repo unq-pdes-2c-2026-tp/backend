@@ -2,7 +2,6 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_200_OK
-from rest_framework.test import APIClient
 
 from packages.tests.factories import AgencyFactory
 from test_utils.views import post, get
@@ -14,8 +13,7 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_post_user_allows_frontend_origin():
-    client = APIClient()
-    response = client.post(
+    response = post(
         reverse("user-list"),
         {
             "email": "test@mail.com",
@@ -24,7 +22,6 @@ def test_post_user_allows_frontend_origin():
             "password": "contra-seña",
         },
         HTTP_ORIGIN="http://localhost:5173",
-        format="json",
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -52,13 +49,7 @@ def test_post_user_creates_user():
 
 
 @pytest.mark.django_db
-def test_post_user_fails_when_user_with_the_same_mail_exists():
-    User.objects.create_user(
-        email="test@mail.com",
-        password="123",
-        name="Pep",
-        user_type=UserType.END_USER.value,
-    )
+def test_post_user_fails_when_user_with_the_same_mail_exists(end_user):
     response = post(
         reverse("user-list"),
         {
@@ -90,7 +81,7 @@ def test_post_user_fails_when_user_type_is_agency_and_agency_is_missing():
 
 
 @pytest.mark.django_db
-def test_post_user_is_created_with_agency_related():
+def test_post_user_is_created_with_agency_related(admin_user):
     agency = AgencyFactory()
     response = post(
         reverse("user-list"),
@@ -101,6 +92,7 @@ def test_post_user_is_created_with_agency_related():
             "password": "contra-seña",
             "agency": agency.pk,
         },
+        user=admin_user,
     )
     assert response.status_code == HTTP_201_CREATED
     qs = User.objects.filter(
@@ -113,23 +105,17 @@ def test_post_user_is_created_with_agency_related():
 
 
 @pytest.mark.django_db
-def test_get_user():
-    user = User.objects.create_user(
-        email="test@mail.com",
-        password="123",
-        name="Pep",
-        user_type=UserType.END_USER.value,
-    )
+def test_get_user(end_user):
     response = get(
-        reverse("user-detail", kwargs={"pk": user.id}),
+        reverse("user-detail", kwargs={"pk": end_user.id}),
     )
 
     assert response.status_code == HTTP_200_OK
     assert response.json() == {
-        "id": user.pk,
+        "id": end_user.pk,
         "name": "Pep",
         "email": "test@mail.com",
-        "user_type": user.user_type,
+        "user_type": end_user.user_type,
         "agency": None,
         "profile_picture": None,
     }
