@@ -2,7 +2,6 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_200_OK
-from rest_framework.test import APIClient
 
 from packages.tests.factories import AgencyFactory
 from test_utils.views import post, get
@@ -14,8 +13,7 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_post_user_allows_frontend_origin():
-    client = APIClient()
-    response = client.post(
+    response = post(
         reverse("user-list"),
         {
             "email": "test@mail.com",
@@ -24,7 +22,6 @@ def test_post_user_allows_frontend_origin():
             "password": "contra-seña",
         },
         HTTP_ORIGIN="http://localhost:5173",
-        format="json",
     )
 
     assert response.status_code == HTTP_201_CREATED
@@ -84,7 +81,7 @@ def test_post_user_fails_when_user_type_is_agency_and_agency_is_missing():
 
 
 @pytest.mark.django_db
-def test_post_user_is_created_with_agency_related():
+def test_post_user_is_created_with_agency_related(admin_user):
     agency = AgencyFactory()
     response = post(
         reverse("user-list"),
@@ -95,6 +92,7 @@ def test_post_user_is_created_with_agency_related():
             "password": "contra-seña",
             "agency": agency.pk,
         },
+        user=admin_user,
     )
     assert response.status_code == HTTP_201_CREATED
     qs = User.objects.filter(

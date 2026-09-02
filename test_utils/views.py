@@ -1,11 +1,11 @@
 from rest_framework.test import APIClient
 
 
-def post(url, data, fmt="json", user=None):
+def post(url, data, fmt="json", user=None, **kwargs):
     client = APIClient()
     if user:
         client.force_authenticate(user)
-    response = client.post(url, data, format=fmt)
+    response = client.post(url, data, format=fmt, **kwargs)
     return response
 
 
