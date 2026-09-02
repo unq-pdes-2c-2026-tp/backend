@@ -146,3 +146,18 @@ def test_delete_agency_returns_unauthorized_when_user_is_agency(agency_user):
 
     qs = Agency.objects.filter(name="Agencia")
     assert qs.exists()
+
+
+@pytest.mark.django_db
+def test_list_agencies_search_filters_by_name():
+    agency1 = AgencyFactory(name="Agencia")
+    agency2 = AgencyFactory(name="Lagencia")
+    AgencyFactory(name="Carlitos travel")
+    response = get(reverse("agency-list"), {"search": "agen"})
+
+    assert response.status_code == HTTP_200_OK
+
+    assert response.json() == [
+        {"id": agency1.id, "name": "Agencia"},
+        {"id": agency2.id, "name": "Lagencia"},
+    ]

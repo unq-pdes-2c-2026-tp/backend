@@ -1,5 +1,6 @@
 from rest_framework.viewsets import ModelViewSet
 
+from packages.filters import AgencyFilterSet
 from packages.models import Agency
 from packages.serializers import AgencySerializer
 from users.permissions import AdminPermission
@@ -8,6 +9,7 @@ from users.permissions import AdminPermission
 class AgencyViewSet(ModelViewSet):
     queryset = Agency.objects.all()
     serializer_class = AgencySerializer
+    filterset_class = AgencyFilterSet
 
     def get_permissions(self):
         base_permissions = super().get_permissions()
