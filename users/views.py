@@ -50,13 +50,13 @@ class UserViewSet(ModelViewSet):
 
             user.save(update_fields=["profile_picture"])
 
-            return Response(
-                {
-                    "profile_picture": user.profile_picture.url
-                    if user.profile_picture
-                    else None
-                }
+            profile_picture_url = (
+                request.build_absolute_uri(user.profile_picture.url)
+                if user.profile_picture
+                else None
             )
+
+            return Response({"profile_picture": profile_picture_url})
 
         if request.method == "DELETE":
             user = request.user
@@ -82,5 +82,6 @@ class LoginView(ObtainAuthToken):
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
         return Response(
-            UserLoginSerializer(user).data, headers={"Authentication": token.key}
+            UserLoginSerializer(user).data,
+            headers={"Authorization": f"Token {token.key}"},
         )
