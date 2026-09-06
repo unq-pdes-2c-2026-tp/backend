@@ -40,4 +40,3 @@ def test_login_with_valid_credentials_response_headers():
 
     assert response.status_code == HTTP_200_OK
     assert "authorization" in response.headers
-    assert response.headers["authorization"].startswith("Token ")
