@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "rest_framework.authtoken",
+    "drf_spectacular",
     "corsheaders",
     "users",
     "packages",
@@ -125,6 +126,7 @@ AUTH_USER_MODEL = "users.User"
 
 REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.TokenAuthentication",
     ],

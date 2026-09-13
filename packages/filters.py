@@ -5,7 +5,9 @@ from packages.models import Agency, Hotel
 
 
 class AgencyFilterSet(filters.FilterSet):
-    search = filters.CharFilter(method="search_func")
+    search = filters.CharFilter(
+        method="search_func", help_text="Filter agencies by name substring"
+    )
 
     class Meta:
         model = Agency
@@ -16,7 +18,10 @@ class AgencyFilterSet(filters.FilterSet):
 
 
 class HotelFilterSet(filters.FilterSet):
-    search = filters.CharFilter(method="search_func")
+    search = filters.CharFilter(
+        method="search_func",
+        help_text="Filter hotels by name, description or city name substring",
+    )
 
     class Meta:
         model = Hotel
