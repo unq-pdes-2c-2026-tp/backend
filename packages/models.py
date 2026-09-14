@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db.models import UniqueConstraint
+from django.db.models.functions import Lower
 
 
 class Agency(models.Model):
@@ -14,7 +16,7 @@ class City(models.Model):
     name = models.CharField(max_length=255)
 
     class Meta:
-        pass  # Unique con lower
+        constraints = [UniqueConstraint(Lower("name"), name="city_name_lower_unique")]
 
 
 class Hotel(models.Model):

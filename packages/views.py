@@ -1,8 +1,8 @@
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from packages.filters import AgencyFilterSet
-from packages.models import Agency
-from packages.serializers import AgencySerializer
+from packages.filters import AgencyFilterSet, HotelFilterSet
+from packages.models import Agency, Hotel
+from packages.serializers import AgencySerializer, HotelSerializer
 from users.permissions import AdminPermission
 
 
@@ -18,3 +18,9 @@ class AgencyViewSet(ModelViewSet):
             base_permissions.append(AdminPermission())
 
         return base_permissions
+
+
+class HotelViewSet(ReadOnlyModelViewSet):
+    queryset = Hotel.objects.all()
+    serializer_class = HotelSerializer
+    filterset_class = HotelFilterSet
