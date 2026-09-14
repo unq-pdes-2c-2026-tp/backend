@@ -10,6 +10,7 @@ from rest_framework.status import (
     HTTP_204_NO_CONTENT,
     HTTP_405_METHOD_NOT_ALLOWED,
 )
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from users.managers import UserManager
@@ -85,3 +86,9 @@ class LoginView(ObtainAuthToken):
             UserLoginSerializer(user).data,
             headers={"Authorization": token.key},
         )
+
+
+class LogoutView(APIView):
+    def post(self, request, *args, **kwargs):
+        request.auth.delete()
+        return Response({"logout": True})
