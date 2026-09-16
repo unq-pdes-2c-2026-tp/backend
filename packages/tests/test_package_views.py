@@ -15,8 +15,14 @@ from users.models import User
 @patch("packages.serializers.requests.get")
 def test_agency_can_create_package(mock_get):
     mock_get.side_effect = [
-        Mock(status_code=200, json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"}),
-        Mock(status_code=200, json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"}),
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
+        ),
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"},
+        ),
     ]
     agency = Agency.objects.create(name="Andes Travel")
     user = User.objects.create_user(
@@ -54,8 +60,14 @@ def test_agency_can_create_package(mock_get):
 @patch("packages.serializers.requests.get")
 def test_package_requires_return_flight_to_reverse_route(mock_get):
     mock_get.side_effect = [
-        Mock(status_code=200, json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"}),
-        Mock(status_code=200, json=lambda: {"origen": "Mendoza", "destino": "Buenos Aires"}),
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
+        ),
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Mendoza", "destino": "Buenos Aires"},
+        ),
     ]
     agency = Agency.objects.create(name="Andes Travel")
     user = User.objects.create_user(

@@ -62,12 +62,17 @@ class FlightListView(APIView):
             response.raise_for_status()
         except requests.RequestException as error:
             return Response(
-                {"detail": "No se pudo consultar la API de vuelos.", "error": str(error)},
+                {
+                    "detail": "No se pudo consultar la API de vuelos.",
+                    "error": str(error),
+                },
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
         payload = response.json()
-        flights = payload.get("results", payload) if isinstance(payload, dict) else payload
+        flights = (
+            payload.get("results", payload) if isinstance(payload, dict) else payload
+        )
         date_from = request.query_params.get("date_from")
         date_to = request.query_params.get("date_to")
         try:
@@ -81,7 +86,8 @@ class FlightListView(APIView):
 
         if date_from or date_to:
             flights = [
-                flight for flight in flights
+                flight
+                for flight in flights
                 if (not date_from or date.fromisoformat(flight["fecha"]) >= date_from)
                 and (not date_to or date.fromisoformat(flight["fecha"]) <= date_to)
             ]

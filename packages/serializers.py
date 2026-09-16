@@ -27,7 +27,9 @@ class HotelSerializer(serializers.ModelSerializer):
         if not hotel.photo:
             return None
         request = self.context.get("request")
-        return request.build_absolute_uri(hotel.photo.url) if request else hotel.photo.url
+        return (
+            request.build_absolute_uri(hotel.photo.url) if request else hotel.photo.url
+        )
 
 
 class PackageSerializer(serializers.ModelSerializer):
@@ -39,10 +41,21 @@ class PackageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Package
         fields = (
-            "id", "name", "description", "price", "available", "agency",
-            "agency_name", "hotel", "hotel_name", "hotel_photo", "origin",
-            "outbound_flight_id", "outbound_flight_date",
-            "return_flight_id", "return_flight_date",
+            "id",
+            "name",
+            "description",
+            "price",
+            "available",
+            "agency",
+            "agency_name",
+            "hotel",
+            "hotel_name",
+            "hotel_photo",
+            "origin",
+            "outbound_flight_id",
+            "outbound_flight_date",
+            "return_flight_id",
+            "return_flight_date",
         )
         read_only_fields = ("id", "agency", "agency_name", "hotel_name", "hotel_photo")
 
@@ -50,7 +63,11 @@ class PackageSerializer(serializers.ModelSerializer):
         if not package.hotel.photo:
             return None
         request = self.context.get("request")
-        return request.build_absolute_uri(package.hotel.photo.url) if request else package.hotel.photo.url
+        return (
+            request.build_absolute_uri(package.hotel.photo.url)
+            if request
+            else package.hotel.photo.url
+        )
 
     def validate(self, attrs):
         if attrs["return_flight_date"] <= attrs["outbound_flight_date"]:
@@ -71,15 +88,16 @@ class PackageSerializer(serializers.ModelSerializer):
             return_response.raise_for_status()
         except requests.RequestException as error:
             raise serializers.ValidationError(
-                {"outbound_flight_id": "No se pudieron validar los vuelos seleccionados."}
+                {
+                    "outbound_flight_id": "No se pudieron validar los vuelos seleccionados."
+                }
             ) from error
 
         outbound_flight = outbound_response.json()
         return_flight = return_response.json()
-        if (
-            outbound_flight.get("origen") != return_flight.get("destino")
-            or outbound_flight.get("destino") != return_flight.get("origen")
-        ):
+        if outbound_flight.get("origen") != return_flight.get(
+            "destino"
+        ) or outbound_flight.get("destino") != return_flight.get("origen"):
             raise serializers.ValidationError(
                 {
                     "return_flight_id": (

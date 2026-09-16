@@ -8,4 +8,6 @@ router.register(r"agencies", AgencyViewSet)
 router.register(r"hotels", HotelViewSet)
 router.register(r"packages", PackageViewSet)
 
-urlpatterns = [path("flights/", FlightListView.as_view(), name="flight-list")] + router.urls
+urlpatterns = [
+    path("flights/", FlightListView.as_view(), name="flight-list")
+] + router.urls
