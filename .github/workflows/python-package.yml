@@ -33,11 +33,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Start Docker Compose services
-      run: docker compose up -d --build
+      run: docker compose up -d --build db
     - name: Run django checks
-      run: docker compose exec ctv python manage.py check --fail-level=WARNING
+      run: docker compose run --rm --no-deps --build ctv python manage.py check --fail-level=WARNING
     - name: Check missing migrations
-      run: docker compose exec ctv python manage.py makemigrations --dry-run --check --no-input
+      run: docker compose run --rm --no-deps --build ctv python manage.py makemigrations --dry-run --check --no-input
 
   test:
 
