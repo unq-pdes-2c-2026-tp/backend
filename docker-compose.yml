@@ -29,6 +29,8 @@ services:
       - DB_NAME=ctv
       - DB_USER=ctv_django
       - DB_PASSWORD=ctv_django
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       db:
           condition: service_healthy
