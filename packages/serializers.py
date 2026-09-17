@@ -1,6 +1,7 @@
 import requests
 from django.conf import settings
-from rest_framework import serializers
+from django.db import transaction
+from rest_framework import serializers, status
 from rest_framework.validators import UniqueValidator
 
 from packages.models import (
@@ -82,7 +83,7 @@ class PackageSerializer(serializers.ModelSerializer):
 
         try:
             outbound_response = requests.get(
-                f"{settings.FLIGHTS_API_URL}{attrs['outbound_flight_id']}/",
+                f"{settings.FLIGHTS_API_URL}vuelos/{attrs['outbound_flight_id']}/",
                 timeout=5,
             )
             return_response = requests.get(
@@ -129,6 +130,35 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "user", "datetime", "price")
 
+    def _comprar_vuelo(self, flight_id):
+        url = f"{settings.FLIGHTS_API_URL}vender/"
+        try:
+            response = requests.post(url, json={"vuelo": flight_id}, timeout=5)
+        except requests.RequestException as error:
+            raise serializers.ValidationError(
+                {"package": "No se pudo comunicar con el servicio de vuelos."}
+            ) from error
+
+        if response.status_code != status.HTTP_201_CREATED:
+            error_detail = (
+                response.json()
+                if response.headers.get("content-type") == "application/json"
+                else response.text
+            )
+            raise serializers.ValidationError(
+                {
+                    "package": f"Error al reservar el vuelo ID {flight_id}: {error_detail}"
+                }
+            )
+
+    @transaction.atomic()
     def create(self, validated_data):
-        validated_data["price"] = validated_data["package"].price
+        package: Package = validated_data["package"]
+        validated_data["price"] = package.price
+
+        # Compra vuelo de ida
+        self._comprar_vuelo(package.outbound_flight_id)
+        # Compra vuelo de vuelta
+        self._comprar_vuelo(package.return_flight_id)
+
         return super().create(validated_data)
