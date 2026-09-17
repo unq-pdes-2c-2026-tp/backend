@@ -37,6 +37,20 @@ def test_end_user_can_purchase_package_when_flights_are_available(mock_post, end
     # Llamados a la API de vuelos para la ida y la vuelta
     assert mock_post.call_count == 2
 
+    first_call_json = mock_post.call_args_list[0].kwargs["json"]
+    assert first_call_json == {
+        "vuelo": package.outbound_flight_id,
+        "nombre_pasajero": end_user.name,
+        "email_pasajero": end_user.email,
+    }
+
+    second_call_json = mock_post.call_args_list[1].kwargs["json"]
+    assert second_call_json == {
+        "vuelo": package.return_flight_id,
+        "nombre_pasajero": end_user.name,
+        "email_pasajero": end_user.email,
+    }
+
 
 @pytest.mark.django_db
 @patch("packages.serializers.requests.post")

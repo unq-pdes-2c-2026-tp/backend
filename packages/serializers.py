@@ -130,10 +130,15 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "user", "datetime", "price")
 
-    def _comprar_vuelo(self, flight_id):
+    def _comprar_vuelo(self, flight_id, user_name, user_email):
         url = f"{settings.FLIGHTS_API_URL}vender/"
+        payload = {
+            "vuelo": flight_id,
+            "nombre_pasajero": user_name,
+            "email_pasajero": user_email,
+        }
         try:
-            response = requests.post(url, json={"vuelo": flight_id}, timeout=5)
+            response = requests.post(url, json=payload, timeout=5)
         except requests.RequestException as error:
             raise serializers.ValidationError(
                 {"package": "No se pudo comunicar con el servicio de vuelos."}
@@ -155,10 +160,11 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         package: Package = validated_data["package"]
         validated_data["price"] = package.price
+        user = validated_data["user"]
 
         # Compra vuelo de ida
-        self._comprar_vuelo(package.outbound_flight_id)
+        self._comprar_vuelo(package.outbound_flight_id, user.name, user.email)
         # Compra vuelo de vuelta
-        self._comprar_vuelo(package.return_flight_id)
+        self._comprar_vuelo(package.return_flight_id, user.name, user.email)
 
         return super().create(validated_data)
