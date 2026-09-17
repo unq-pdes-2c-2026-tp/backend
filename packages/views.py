@@ -80,7 +80,7 @@ class FlightListView(APIView):
     def get(self, request):
         try:
             response = requests.get(
-                settings.FLIGHTS_API_URL,
+                settings.FLIGHTS_API_URL + "vuelos/",
                 params={"search": request.query_params.get("search", "")},
                 timeout=5,
             )

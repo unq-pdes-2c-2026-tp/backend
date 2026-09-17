@@ -86,7 +86,7 @@ class PackageSerializer(serializers.ModelSerializer):
                 timeout=5,
             )
             return_response = requests.get(
-                f"{settings.FLIGHTS_API_URL}{attrs['return_flight_id']}/",
+                f"{settings.FLIGHTS_API_URL}vuelos/{attrs['return_flight_id']}/",
                 timeout=5,
             )
             outbound_response.raise_for_status()
