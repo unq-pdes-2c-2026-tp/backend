@@ -3,15 +3,40 @@ from datetime import date
 import requests
 from django.conf import settings
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import serializers, status
+from rest_framework import (
+    serializers,
+    status,
+    mixins,
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.viewsets import (
+    ModelViewSet,
+    ReadOnlyModelViewSet,
+    GenericViewSet,
+)
 
-from packages.filters import AgencyFilterSet, HotelFilterSet
-from packages.models import Agency, Hotel, Package
-from packages.serializers import AgencySerializer, HotelSerializer, PackageSerializer
-from users.permissions import AdminPermission, AgencyPermission
+from packages.filters import (
+    AgencyFilterSet,
+    HotelFilterSet,
+)
+from packages.models import (
+    Agency,
+    Hotel,
+    Package,
+    PackagePurchase,
+)
+from packages.serializers import (
+    AgencySerializer,
+    HotelSerializer,
+    PackageSerializer,
+    PackagePurchaseSerializer,
+)
+from users.permissions import (
+    AdminPermission,
+    AgencyPermission,
+    EndUserPermission,
+)
 
 
 class AgencyViewSet(ModelViewSet):
@@ -55,7 +80,7 @@ class FlightListView(APIView):
     def get(self, request):
         try:
             response = requests.get(
-                settings.FLIGHTS_API_URL,
+                settings.FLIGHTS_API_URL + "vuelos/",
                 params={"search": request.query_params.get("search", "")},
                 timeout=5,
             )
@@ -92,3 +117,24 @@ class FlightListView(APIView):
                 and (not date_to or date.fromisoformat(flight["fecha"]) <= date_to)
             ]
         return Response(flights)
+
+
+class PackagePurchaseViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
+    queryset = PackagePurchase.objects.select_related("package", "user").all()
+    serializer_class = PackagePurchaseSerializer
+
+    def get_permissions(self):
+        base_permissions = super().get_permissions()
+
+        if self.action == "create":
+            base_permissions.append(EndUserPermission())
+
+        return base_permissions
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
