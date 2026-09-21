@@ -2,10 +2,12 @@ import pytest
 from django.urls import reverse
 from rest_framework.status import (
     HTTP_200_OK,
+    HTTP_403_FORBIDDEN,
 )
 
 from packages.tests.factories import PackagePurchaseFactory
 from test_utils.views import get
+from users.constants import UserType
 from users.tests.factories import UserFactory
 
 
@@ -23,3 +25,12 @@ def test_top_spenders_limits_to_five_users(admin_user):
     results = response.json()
     assert len(results) == 5
     assert first_user_id not in [result["user"]["id"] for result in results]
+
+
+@pytest.mark.parametrize("user_type", (UserType.AGENCY, UserType.END_USER))
+@pytest.mark.django_db
+def test_top_spenders_is_restricted_to_admins(user_type):
+    user = UserFactory(user_type=user_type)
+    response = get(reverse("packagepurchase-top-spenders"), user=user)
+
+    assert response.status_code == HTTP_403_FORBIDDEN

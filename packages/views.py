@@ -147,7 +147,12 @@ class PackagePurchaseViewSet(
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-    @action(methods=["get"], detail=False, url_path="top-spenders")
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="top-spenders",
+        permission_classes=[IsAuthenticated, AdminPermission],
+    )
     def top_spenders(self, request):
         top_spenders = (
             PackagePurchase.objects.values("user")
