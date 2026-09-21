@@ -2,6 +2,11 @@ from datetime import date
 
 import requests
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.db.models import Sum, Value
+from django.db.models.fields import DecimalField
+from django.db.models.functions import Coalesce
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import (
     serializers,
@@ -31,12 +36,15 @@ from packages.serializers import (
     HotelSerializer,
     PackageSerializer,
     PackagePurchaseSerializer,
+    SpenderSerializer,
 )
 from users.permissions import (
     AdminPermission,
     AgencyPermission,
     EndUserPermission,
 )
+
+User = get_user_model()
 
 
 class AgencyViewSet(ModelViewSet):
@@ -138,3 +146,29 @@ class PackagePurchaseViewSet(
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @action(methods=["get"], detail=False, url_path="top-spenders")
+    def top_spenders(self, request):
+        top_spenders = (
+            PackagePurchase.objects.values("user")
+            .annotate(
+                total_spent=Coalesce(
+                    Sum("price"), Value(0.0), output_field=DecimalField()
+                )
+            )
+            .order_by("-total_spent")[:5]
+        )
+
+        result = []
+        user_ids = [spender["user"] for spender in top_spenders]
+
+        user_by_id = User.objects.filter(id__in=user_ids).in_bulk()
+
+        for spender in top_spenders:
+            result.append(
+                {
+                    "user": user_by_id[spender["user"]],
+                    "total_spent": spender["total_spent"],
+                }
+            )
+        return Response(SpenderSerializer(result, many=True).data)

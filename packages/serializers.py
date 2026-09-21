@@ -10,6 +10,7 @@ from packages.models import (
     Package,
     PackagePurchase,
 )
+from users.serializers import UserLiteSerializer
 
 
 class AgencySerializer(serializers.ModelSerializer):
@@ -168,3 +169,8 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
         self._comprar_vuelo(package.return_flight_id, user.name, user.email)
 
         return super().create(validated_data)
+
+
+class SpenderSerializer(serializers.Serializer):
+    user = UserLiteSerializer()
+    total_spent = serializers.DecimalField(max_digits=20, decimal_places=2)
