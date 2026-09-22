@@ -8,6 +8,16 @@ from users.constants import UserType
 User = get_user_model()
 
 
+class UserLiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "name",
+            "email",
+        )
+
+
 class UserSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=50)
     email = serializers.EmailField(
