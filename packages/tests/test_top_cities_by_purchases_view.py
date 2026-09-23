@@ -12,7 +12,7 @@ from users.tests.factories import UserFactory
 
 
 @pytest.mark.django_db
-def test_top_cities_limits_to_five_users(admin_user, end_user):
+def test_top_cities_by_purchases_limits_to_five_cities(admin_user, end_user):
     first_city_id = None
     for n in range(6):
         city = CityFactory()
@@ -20,7 +20,7 @@ def test_top_cities_limits_to_five_users(admin_user, end_user):
         for i in range(n + 1):
             PackagePurchaseFactory(package__hotel__city=city, user=end_user, price=1000)
 
-    response = get(reverse("packagepurchase-top-cities"), user=admin_user)
+    response = get(reverse("packagepurchase-top-cities-by-purchases"), user=admin_user)
 
     assert response.status_code == HTTP_200_OK
     results = response.json()
@@ -31,8 +31,8 @@ def test_top_cities_limits_to_five_users(admin_user, end_user):
 
 @pytest.mark.parametrize("user_type", (UserType.AGENCY, UserType.END_USER))
 @pytest.mark.django_db
-def test_top_cities_is_restricted_to_admins(user_type):
+def test_top_cities_by_purchases_is_restricted_to_admins(user_type):
     user = UserFactory(user_type=user_type)
-    response = get(reverse("packagepurchase-top-cities"), user=user)
+    response = get(reverse("packagepurchase-top-cities-by-purchases"), user=user)
 
     assert response.status_code == HTTP_403_FORBIDDEN

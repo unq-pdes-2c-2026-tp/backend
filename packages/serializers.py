@@ -183,6 +183,11 @@ class SpenderSerializer(serializers.Serializer):
     total_spent = serializers.DecimalField(max_digits=20, decimal_places=2)
 
 
-class TopCitySerializer(serializers.Serializer):
+class TopCityByPurchasesSerializer(serializers.Serializer):
     city = CitySerializer()
     total_purchases = serializers.IntegerField()
+
+
+class TopCityByReviewsSerializer(serializers.Serializer):
+    city = CitySerializer()
+    avg_reviews = serializers.DecimalField(max_digits=20, decimal_places=2)

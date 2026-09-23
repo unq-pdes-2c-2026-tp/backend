@@ -3,7 +3,7 @@ from datetime import date
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Value, Count
+from django.db.models import Sum, Value, Count, Avg
 from django.db.models.fields import DecimalField
 from django.db.models.functions import Coalesce
 from rest_framework.decorators import action
@@ -21,7 +21,7 @@ from rest_framework.viewsets import (
     GenericViewSet,
 )
 
-from packages.aggregation import aggregate_package_purchase
+from packages.aggregation import aggregate_package_purchase, aggregate_package_review
 from packages.filters import (
     AgencyFilterSet,
     HotelFilterSet,
@@ -39,7 +39,8 @@ from packages.serializers import (
     PackageSerializer,
     PackagePurchaseSerializer,
     SpenderSerializer,
-    TopCitySerializer,
+    TopCityByPurchasesSerializer,
+    TopCityByReviewsSerializer,
 )
 from users.permissions import (
     AdminPermission,
@@ -170,10 +171,10 @@ class PackagePurchaseViewSet(
     @action(
         methods=["get"],
         detail=False,
-        url_path="top-cities",
+        url_path="top-cities-by-purchases",
         permission_classes=[IsAuthenticated, AdminPermission],
     )
-    def top_cities(self, request):
+    def top_cities_by_purchases(self, request):
         result = aggregate_package_purchase(
             dimension_field="package__hotel__city",
             dimension_name="city",
@@ -182,4 +183,21 @@ class PackagePurchaseViewSet(
             result_key="total_purchases",
         )
 
-        return Response(TopCitySerializer(result, many=True).data)
+        return Response(TopCityByPurchasesSerializer(result, many=True).data)
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="top-cities-by-reviews",
+        permission_classes=[IsAuthenticated, AdminPermission],
+    )
+    def top_cities_by_reviews(self, request):
+        result = aggregate_package_review(
+            dimension_field="package_purchase__package__hotel__city",
+            dimension_name="city",
+            dimension_model=City,
+            expression=Avg("score"),
+            result_key="avg_reviews",
+        )
+
+        return Response(TopCityByReviewsSerializer(result, many=True).data)
