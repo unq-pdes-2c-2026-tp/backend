@@ -3,7 +3,7 @@ from datetime import date
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Value
+from django.db.models import Sum, Value, Count
 from django.db.models.fields import DecimalField
 from django.db.models.functions import Coalesce
 from rest_framework.decorators import action
@@ -21,6 +21,7 @@ from rest_framework.viewsets import (
     GenericViewSet,
 )
 
+from packages.aggregation import aggregate_package_purchase
 from packages.filters import (
     AgencyFilterSet,
     HotelFilterSet,
@@ -30,6 +31,7 @@ from packages.models import (
     Hotel,
     Package,
     PackagePurchase,
+    City,
 )
 from packages.serializers import (
     AgencySerializer,
@@ -37,6 +39,7 @@ from packages.serializers import (
     PackageSerializer,
     PackagePurchaseSerializer,
     SpenderSerializer,
+    TopCitySerializer,
 )
 from users.permissions import (
     AdminPermission,
@@ -154,26 +157,29 @@ class PackagePurchaseViewSet(
         permission_classes=[IsAuthenticated, AdminPermission],
     )
     def top_spenders(self, request):
-        top_spenders = (
-            PackagePurchase.objects.values("user")
-            .annotate(
-                total_spent=Coalesce(
-                    Sum("price"), Value(0.0), output_field=DecimalField()
-                )
-            )
-            .order_by("-total_spent")[:5]
+        result = aggregate_package_purchase(
+            dimension_field="user",
+            dimension_name="user",
+            dimension_model=User,
+            expression=Coalesce(Sum("price"), Value(0.0), output_field=DecimalField()),
+            result_key="total_spent",
         )
 
-        result = []
-        user_ids = [spender["user"] for spender in top_spenders]
-
-        user_by_id = User.objects.filter(id__in=user_ids).in_bulk()
-
-        for spender in top_spenders:
-            result.append(
-                {
-                    "user": user_by_id[spender["user"]],
-                    "total_spent": spender["total_spent"],
-                }
-            )
         return Response(SpenderSerializer(result, many=True).data)
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="top-cities",
+        permission_classes=[IsAuthenticated, AdminPermission],
+    )
+    def top_cities(self, request):
+        result = aggregate_package_purchase(
+            dimension_field="package__hotel__city",
+            dimension_name="city",
+            dimension_model=City,
+            expression=Count("id"),
+            result_key="total_purchases",
+        )
+
+        return Response(TopCitySerializer(result, many=True).data)

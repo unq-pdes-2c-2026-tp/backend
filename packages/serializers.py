@@ -9,6 +9,7 @@ from packages.models import (
     Hotel,
     Package,
     PackagePurchase,
+    City,
 )
 from users.serializers import UserLiteSerializer
 
@@ -20,6 +21,12 @@ class AgencySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Agency
+        fields = ("id", "name")
+
+
+class CitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = City
         fields = ("id", "name")
 
 
@@ -174,3 +181,8 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
 class SpenderSerializer(serializers.Serializer):
     user = UserLiteSerializer()
     total_spent = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+
+class TopCitySerializer(serializers.Serializer):
+    city = CitySerializer()
+    total_purchases = serializers.IntegerField()
