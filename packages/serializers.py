@@ -24,6 +24,18 @@ class AgencySerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
+class AgencyDetailedSerializer(serializers.ModelSerializer):
+    total_revenue = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+    class Meta:
+        model = Agency
+        fields = (
+            "id",
+            "name",
+            "total_revenue",
+        )
+
+
 class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
