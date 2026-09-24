@@ -26,6 +26,7 @@ class AgencySerializer(serializers.ModelSerializer):
 
 class AgencyDetailedSerializer(serializers.ModelSerializer):
     total_revenue = serializers.DecimalField(max_digits=20, decimal_places=2)
+    avg_score = serializers.DecimalField(max_digits=3, decimal_places=1)
 
     class Meta:
         model = Agency
@@ -33,6 +34,7 @@ class AgencyDetailedSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "total_revenue",
+            "avg_score",
         )
 
 

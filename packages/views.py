@@ -3,7 +3,7 @@ from datetime import date
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Value, Count, Avg, Q
+from django.db.models import Sum, Value, Count, Avg
 from django.db.models.fields import DecimalField
 from django.db.models.functions import Coalesce
 from django.utils import timezone
@@ -81,27 +81,33 @@ class AgencyViewSet(ModelViewSet):
 
         today = timezone.now()
         first_day_of_month = today.replace(day=1)
+
         revenue_by_id = (
-            self.get_queryset()
-            .filter(
-                Q(
-                    packages__packagepurchase__datetime__gte=first_day_of_month,
-                    packages__packagepurchase__datetime__lte=today,
-                )
-                | Q(packages__isnull=True),
-                id__in=agency_ids,
+            PackagePurchase.objects.filter(
+                datetime__gte=first_day_of_month,
+                datetime__lte=today,
+                package__agency_id__in=agency_ids,
             )
-            .values("id")
+            .values("package__agency_id")
             .annotate(
                 total_revenue=Coalesce(
-                    Sum("packages__packagepurchase__price"),
+                    Sum("price"),
                     Value(0.0),
                     output_field=DecimalField(),
                 )
             )
         )
 
-        revenue_by_id = {item["id"]: item["total_revenue"] for item in revenue_by_id}
+        revenue_by_id = {
+            item["package__agency_id"]: item["total_revenue"] for item in revenue_by_id
+        }
+
+        score_by_agency = (
+            Agency.objects.filter(id__in=agency_ids)
+            .values("id")
+            .annotate(avg_score=Avg("packages__packagepurchase__packagereview__score"))
+        )
+        score_by_agency = {item["id"]: item["avg_score"] for item in score_by_agency}
         results = []
         for agency in page:
             results.append(
@@ -109,6 +115,7 @@ class AgencyViewSet(ModelViewSet):
                     "id": agency.id,
                     "name": agency.name,
                     "total_revenue": revenue_by_id.get(agency.id, 0),
+                    "avg_score": score_by_agency.get(agency.id),
                 }
             )
 
