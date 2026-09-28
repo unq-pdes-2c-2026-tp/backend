@@ -26,6 +26,4 @@ DATABASES = {
     }
 }
 
-INSTALLED_APPS += [
-    "behave_django",
-]
+INSTALLED_APPS += ["behave_django"]
