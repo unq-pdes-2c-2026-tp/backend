@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum, Value, Count, Avg
 from django.db.models.fields import DecimalField
 from django.db.models.functions import Coalesce
+from django.utils import timezone
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import (
@@ -41,6 +42,7 @@ from packages.serializers import (
     SpenderSerializer,
     TopCityByPurchasesSerializer,
     TopCityByReviewsSerializer,
+    AgencyDetailedSerializer,
 )
 from users.permissions import (
     AdminPermission,
@@ -63,6 +65,61 @@ class AgencyViewSet(ModelViewSet):
             base_permissions.append(AdminPermission())
 
         return base_permissions
+
+    @action(
+        methods=["get"],
+        url_path="detailed",
+        permission_classes=[IsAuthenticated, AdminPermission],
+        detail=False,
+    )
+    def list_detailed(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        page = page or queryset
+        agency_ids = [agency.id for agency in page]
+
+        today = timezone.now()
+        first_day_of_month = today.replace(day=1)
+
+        revenue_by_id = (
+            PackagePurchase.objects.filter(
+                datetime__gte=first_day_of_month,
+                datetime__lte=today,
+                package__agency_id__in=agency_ids,
+            )
+            .values("package__agency_id")
+            .annotate(
+                total_revenue=Coalesce(
+                    Sum("price"),
+                    Value(0.0),
+                    output_field=DecimalField(),
+                )
+            )
+        )
+
+        revenue_by_id = {
+            item["package__agency_id"]: item["total_revenue"] for item in revenue_by_id
+        }
+
+        score_by_agency = (
+            Agency.objects.filter(id__in=agency_ids)
+            .values("id")
+            .annotate(avg_score=Avg("packages__packagepurchase__packagereview__score"))
+        )
+        score_by_agency = {item["id"]: item["avg_score"] for item in score_by_agency}
+        results = []
+        for agency in page:
+            results.append(
+                {
+                    "id": agency.id,
+                    "name": agency.name,
+                    "total_revenue": revenue_by_id.get(agency.id, 0),
+                    "avg_score": score_by_agency.get(agency.id),
+                }
+            )
+
+        return Response(AgencyDetailedSerializer(results, many=True).data)
 
 
 class HotelViewSet(ReadOnlyModelViewSet):
