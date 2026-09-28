@@ -42,6 +42,7 @@ from packages.serializers import (
     SpenderSerializer,
     TopCityByPurchasesSerializer,
     TopCityByReviewsSerializer,
+    TopAgencyByRevenueSerializer,
     AgencyDetailedSerializer,
 )
 from users.permissions import (
@@ -258,3 +259,20 @@ class PackagePurchaseViewSet(
         )
 
         return Response(TopCityByReviewsSerializer(result, many=True).data)
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="top-agencies-by-revenue",
+        permission_classes=[IsAuthenticated, AdminPermission],
+    )
+    def top_agencies_by_revenue(self, request):
+        result = aggregate_package_purchase(
+            dimension_field="package__agency",
+            dimension_name="agency",
+            dimension_model=Agency,
+            expression=Coalesce(Sum("price"), Value(0.0), output_field=DecimalField()),
+            result_key="total_revenue",
+        )
+
+        return Response(TopAgencyByRevenueSerializer(result, many=True).data)

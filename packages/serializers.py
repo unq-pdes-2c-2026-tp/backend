@@ -205,3 +205,8 @@ class TopCityByPurchasesSerializer(serializers.Serializer):
 class TopCityByReviewsSerializer(serializers.Serializer):
     city = CitySerializer()
     avg_reviews = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+
+class TopAgencyByRevenueSerializer(serializers.Serializer):
+    agency = AgencySerializer()
+    total_revenue = serializers.DecimalField(max_digits=20, decimal_places=2)
