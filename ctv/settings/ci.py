@@ -1,4 +1,5 @@
 from ctv.settings.base import *  # noqa F403
+from ctv.settings.base import INSTALLED_APPS
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -24,3 +25,7 @@ DATABASES = {
         },
     }
 }
+
+INSTALLED_APPS += [
+    "behave_django",
+]
