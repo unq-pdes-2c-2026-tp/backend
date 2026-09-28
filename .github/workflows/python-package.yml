@@ -35,9 +35,9 @@ jobs:
     - name: Start Docker Compose services
       run: docker compose up -d --build db
     - name: Run django checks
-      run: docker compose run --rm --no-deps --build ctv python manage.py check --fail-level=WARNING --settings ctv.settings.production
+      run: docker compose run --rm --no-deps --build ctv DJANGO_SECRET_KEY="some-secret" python manage.py check --fail-level=WARNING --settings ctv.settings.production
     - name: Check missing migrations
-      run: docker compose run --rm --no-deps --build ctv python manage.py makemigrations --dry-run --check --no-input --settings ctv.settings.production
+      run: docker compose run --rm --no-deps --build ctv DJANGO_SECRET_KEY="some-secret" python manage.py makemigrations --dry-run --check --no-input --settings ctv.settings.production
 
   test:
 
