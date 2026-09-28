@@ -1,11 +1,10 @@
 import os
 
 from ctv.settings.base import *  # noqa F403
-from ctv.settings.base import INSTALLED_APPS
 
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-jr3^jk4c*r*goat!a=4nm_1wm5l_xf=6ywsu6)243wwdwsswzc"
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -29,5 +28,3 @@ DATABASES = {
         },
     }
 }
-
-INSTALLED_APPS += ["behave_django"]
