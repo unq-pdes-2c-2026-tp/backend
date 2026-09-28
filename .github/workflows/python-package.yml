@@ -29,6 +29,8 @@ jobs:
         run: pre-commit run --all-files
 
   django_checks:
+    env:
+      DJANGO_SETTINGS_MODULE: "ctv.settings.production"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
