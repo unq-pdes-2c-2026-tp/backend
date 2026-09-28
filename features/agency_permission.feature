@@ -3,17 +3,16 @@ Feature: agency permissions
     evalua los permisos sobre las agencias: los admins pueden crear, modificar y borrar, mientras
   que el resto de los usuarios solo pueden leer
 
-  Scenario: un usuario final intenta crear una agencia
-    Given un usuario final
-    When intenta crear una agencia
-     Then un error de permisos insuficientes es devuelto.
-
-  Scenario: un usuario agencia intenta crear una agencia
-    Given un usuario agencia
-    When intenta crear una agencia
-     Then un error de permisos insuficientes es devuelto.
-
-  Scenario: un usuario administrador intenta crear una agencia
-    Given un usuario administrador
-    When intenta crear una agencia
-     Then la agencia es creada correctamente
+  Scenario Outline: ejemplo
+    Given un <usuario>
+    Given una agencia
+      When intenta <accion> una agencia
+     Then <result>
+    Examples: acciones sobre agencias
+     | usuario                   | accion | result |
+     | usuario final             | crear  | un error de permisos insuficientes es devuelto  |
+     | usuario agencia           | crear  | un error de permisos insuficientes es devuelto  |
+     | usuario administrador     | crear  | la agencia es creada correctamente  |
+     | usuario final             | modificar  | un error de permisos insuficientes es devuelto  |
+     | usuario agencia           | modificar  | un error de permisos insuficientes es devuelto  |
+     | usuario administrador     | modificar  | la agencia es modificada correctamente  |

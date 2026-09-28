@@ -1,9 +1,10 @@
 from behave import given, when, then
 from django.urls import reverse
-from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_201_CREATED
+from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_201_CREATED, HTTP_200_OK
 
 from packages.models import Agency
-from test_utils.views import post
+from packages.tests.factories import AgencyFactory
+from test_utils.views import post, patch
 from users.constants import UserType
 from users.tests.factories import UserFactory
 
@@ -23,6 +24,11 @@ def admin_user(context):
     context.user = UserFactory(user_type=UserType.ADMIN)
 
 
+@given("una agencia")
+def agency(context):
+    context.agency = AgencyFactory(name="viejo nombre")
+
+
 @when("intenta crear una agencia")
 def create_agency(context):
     response = post(
@@ -32,8 +38,20 @@ def create_agency(context):
     context.response = response
 
 
-@then("un error de permisos insuficientes es devuelto.")
+@when("intenta modificar una agencia")
+def update_agency(context):
+    response = patch(
+        reverse("agency-detail", kwargs={"pk": context.agency.id}),
+        {"name": "Nuevo nombre"},
+        user=context.user,
+    )
+
+    context.response = response
+
+
+@then("un error de permisos insuficientes es devuelto")
 def assert_403(context):
+    print(context.response.status_code)
     assert context.response.status_code == HTTP_403_FORBIDDEN
 
 
@@ -41,3 +59,9 @@ def assert_403(context):
 def assert_agency_created(context):
     assert context.response.status_code == HTTP_201_CREATED
     assert Agency.objects.filter(name="Nueva Agencia").exists()
+
+
+@then("la agencia es modificada correctamente")
+def assert_agency_updated(context):
+    assert context.response.status_code == HTTP_200_OK
+    assert Agency.objects.filter(name="Nuevo nombre").exists()
