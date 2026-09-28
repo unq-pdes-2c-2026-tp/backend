@@ -35,13 +35,9 @@ jobs:
     - name: Start Docker Compose services
       run: docker compose up -d --build db
     - name: Run django checks
-      env:
-        DJANGO_SETTINGS_MODULE: "ctv.settings.production"
-      run: docker compose run --rm --no-deps --build ctv python manage.py check --fail-level=WARNING
+      run: docker compose run --rm --no-deps --build ctv python manage.py check --fail-level=WARNING --settings ctv.settings.production
     - name: Check missing migrations
-      env:
-        DJANGO_SETTINGS_MODULE: "ctv.settings.production"
-      run: docker compose run --rm --no-deps --build ctv python manage.py makemigrations --dry-run --check --no-input
+      run: docker compose run --rm --no-deps --build ctv python manage.py makemigrations --dry-run --check --no-input --settings ctv.settings.production
 
   test:
 
