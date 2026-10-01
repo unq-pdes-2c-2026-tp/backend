@@ -83,7 +83,7 @@ class LoginView(ObtainAuthToken):
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
         return Response(
-            UserLoginSerializer(user).data,
+            UserLoginSerializer(user, context={"request": request}).data,
             headers={"Authorization": token.key},
         )
 

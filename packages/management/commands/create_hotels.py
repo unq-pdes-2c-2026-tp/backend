@@ -140,7 +140,7 @@ class Command(BaseCommand):
                     },
                 )
 
-                if hotel.photo:
+                if hotel.photo and hotel.photo.storage.exists(hotel.photo.name):
                     self.stdout.write(f"Photo already exists: {hotel_name}")
                     continue
 
