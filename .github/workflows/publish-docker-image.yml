@@ -1,13 +1,11 @@
-name: ctv-build-publish
+name: ctv-cd
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
-  docker:
+  build-publish:
     runs-on: ubuntu-latest
     steps:
       -
