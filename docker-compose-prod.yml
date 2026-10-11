@@ -1,0 +1,38 @@
+services:
+  db:
+    image: mysql:latest
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ctv_django
+      MYSQL_DATABASE: ctv
+      MYSQL_USER: ctv_django
+      MYSQL_PASSWORD: ctv_django
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pctv_django" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ctv:
+    image: ppissi/ctv-unq:latest
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:4000"
+    ports:
+      - "4000:4000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=ctv
+      - DB_USER=ctv_django
+      - DB_PASSWORD=ctv_django
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      db:
+          condition: service_healthy
+volumes:
+  mysql_data:
