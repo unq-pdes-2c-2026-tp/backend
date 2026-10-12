@@ -17,7 +17,7 @@ from packages.tests.factories import (
     CityFactory,
     PackageFactory,
 )
-from test_utils.views import post, get
+from test_utils.views import post, get, put, patch as patch_request
 from users.constants import UserType
 from users.models import User
 
@@ -173,3 +173,173 @@ def test_package_list_requires_authentication():
     response = get(reverse("package-list"))
 
     assert response.status_code == HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+@patch("packages.serializers.requests.get")
+def test_agency_can_update_package(mock_get):
+    mock_get.side_effect = [
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
+        ),
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"},
+        ),
+    ]
+    agency = AgencyFactory(name="Andes Travel")
+    user = User.objects.create_user(
+        email="agency@mail.com",
+        password="123",
+        name="Agencia",
+        user_type=UserType.AGENCY,
+        agency=agency,
+    )
+    hotel = HotelFactory()
+    origin = CityFactory(name="Buenos Aires")
+    package = PackageFactory(
+        hotel=hotel,
+        agency=agency,
+        origin=origin,
+        outbound_flight_id=10,
+        outbound_flight_date="2026-10-10T09:00:00Z",
+        return_flight_id=11,
+        return_flight_date="2026-10-17T09:00:00Z",
+        name="Escapada de prueba",
+        description="Una escapada breve.",
+        price="125000.50",
+    )
+    data = {
+        "hotel": hotel.id,
+        "origin": origin.id,
+        "outbound_flight_id": 10,
+        "outbound_flight_date": "2026-10-12T09:00:00Z",
+        "return_flight_id": 11,
+        "return_flight_date": "2026-10-17T18:00:00Z",
+        "name": "Escapada",
+        "description": "Una escapada muy breve.",
+        "price": "235000.50",
+    }
+
+    response = put(
+        reverse("package-detail", kwargs={"pk": package.pk}), data, user=user
+    )
+
+    assert response.status_code == HTTP_200_OK
+    package.refresh_from_db()
+    assert package.agency == agency
+    assert package.hotel == hotel
+    assert package.price == Decimal("235000.50")
+    assert package.outbound_flight_date.day == 12
+    assert package.description == "Una escapada muy breve."
+
+
+@pytest.mark.django_db
+@patch("packages.serializers.requests.get")
+def test_agency_can_partially_update_package(mock_get):
+    mock_get.side_effect = [
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
+        ),
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"},
+        ),
+    ]
+    agency = AgencyFactory(name="Andes Travel")
+    user = User.objects.create_user(
+        email="agency@mail.com",
+        password="123",
+        name="Agencia",
+        user_type=UserType.AGENCY,
+        agency=agency,
+    )
+    hotel = HotelFactory()
+    origin = CityFactory(name="Buenos Aires")
+    package = PackageFactory(
+        hotel=hotel,
+        agency=agency,
+        origin=origin,
+        outbound_flight_id=10,
+        outbound_flight_date="2026-10-10T09:00:00Z",
+        return_flight_id=11,
+        return_flight_date="2026-10-17T09:00:00Z",
+        name="Escapada de prueba",
+        description="Una escapada breve.",
+        price="125000.50",
+    )
+    data = {
+        "price": "235000.50",
+    }
+
+    response = patch_request(
+        reverse("package-detail", kwargs={"pk": package.pk}), data, user=user
+    )
+
+    assert response.status_code == HTTP_200_OK
+    package.refresh_from_db()
+
+    assert package.price == Decimal("235000.50")
+
+
+@pytest.mark.django_db
+@patch("packages.serializers.requests.get")
+def test_agency_field_is_ignored_on_put(mock_get):
+    mock_get.side_effect = [
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
+        ),
+        Mock(
+            status_code=200,
+            json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"},
+        ),
+    ]
+    agency = AgencyFactory(name="Andes Travel")
+    other_agency = AgencyFactory(name="Travel")
+    user = User.objects.create_user(
+        email="agency@mail.com",
+        password="123",
+        name="Agencia",
+        user_type=UserType.AGENCY,
+        agency=agency,
+    )
+    hotel = HotelFactory()
+    origin = CityFactory(name="Buenos Aires")
+    package = PackageFactory(
+        hotel=hotel,
+        agency=agency,
+        origin=origin,
+        outbound_flight_id=10,
+        outbound_flight_date="2026-10-10T09:00:00Z",
+        return_flight_id=11,
+        return_flight_date="2026-10-17T09:00:00Z",
+        name="Escapada de prueba",
+        description="Una escapada breve.",
+        price="125000.50",
+    )
+    data = {
+        "agency": other_agency.id,
+        "hotel": hotel.id,
+        "origin": origin.id,
+        "outbound_flight_id": 10,
+        "outbound_flight_date": "2026-10-12T09:00:00Z",
+        "return_flight_id": 11,
+        "return_flight_date": "2026-10-17T18:00:00Z",
+        "name": "Escapada",
+        "description": "Una escapada muy breve.",
+        "price": "235000.50",
+    }
+
+    response = put(
+        reverse("package-detail", kwargs={"pk": package.pk}), data, user=user
+    )
+
+    assert response.status_code == HTTP_200_OK
+    package.refresh_from_db()
+    assert package.agency == agency
+
+    assert package.price == Decimal("235000.50")
+    assert package.outbound_flight_date.day == 12

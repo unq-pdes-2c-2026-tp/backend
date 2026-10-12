@@ -1,6 +1,7 @@
 import requests
 from django.conf import settings
 from django.db import transaction
+from requests import Response
 from rest_framework import serializers, status
 from rest_framework.validators import UniqueValidator
 
@@ -98,31 +99,28 @@ class PackageSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, attrs):
-        if attrs["return_flight_date"] <= attrs["outbound_flight_date"]:
+        if self._get_field(attrs, "return_flight_date") <= self._get_field(
+            attrs, "outbound_flight_date"
+        ):
             raise serializers.ValidationError(
                 {"return_flight_date": "Debe ser posterior a la fecha de ida."}
             )
 
         try:
-            outbound_response = requests.get(
-                f"{settings.FLIGHTS_API_URL}vuelos/{attrs['outbound_flight_id']}/",
-                timeout=5,
-            )
-            return_response = requests.get(
-                f"{settings.FLIGHTS_API_URL}vuelos/{attrs['return_flight_id']}/",
-                timeout=5,
-            )
-            outbound_response.raise_for_status()
-            return_response.raise_for_status()
+            outbound_response = self._validate_flight_id(attrs, "outbound_flight_id")
+            return_response = self._validate_flight_id(attrs, "return_flight_id")
         except requests.RequestException as error:
             raise serializers.ValidationError(
                 {
                     "outbound_flight_id": "No se pudieron validar los vuelos seleccionados."
                 }
             ) from error
-
-        outbound_flight = outbound_response.json()
-        return_flight = return_response.json()
+        outbound_flight = dict()
+        return_flight = dict()
+        if outbound_response:
+            outbound_flight = outbound_response.json()
+        if return_response:
+            return_flight = return_response.json()
         if outbound_flight.get("origen") != return_flight.get(
             "destino"
         ) or outbound_flight.get("destino") != return_flight.get("origen"):
@@ -135,6 +133,22 @@ class PackageSerializer(serializers.ModelSerializer):
                 }
             )
         return attrs
+
+    def _validate_flight_id(self, attrs, flight_id_field) -> Response | None:
+        response = None
+        if flight_id_field in attrs:
+            response = requests.get(
+                f"{settings.FLIGHTS_API_URL}vuelos/{attrs[flight_id_field]}/",
+                timeout=5,
+            )
+            response.raise_for_status()
+        return response
+
+    def _get_field(self, data, field_name):
+        return data.get(
+            field_name,
+            getattr(self.instance, field_name) if self.instance is not None else None,
+        )
 
 
 class PackagePurchaseSerializer(serializers.ModelSerializer):
