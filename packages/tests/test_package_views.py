@@ -397,3 +397,77 @@ def test_package_list_filter_by_search_matches_hotel_name():
     response_data = response.json()
     assert len(response_data) == 1
     assert response_data[0]["id"] == package2.pk
+
+
+@pytest.mark.django_db
+def test_end_user_can_not_partially_update_package():
+    agency = AgencyFactory(name="Andes Travel")
+    user = User.objects.create_user(
+        email="agency@mail.com",
+        password="123",
+        name="Agencia",
+        user_type=UserType.END_USER,
+    )
+    hotel = HotelFactory()
+    origin = CityFactory(name="Buenos Aires")
+    package = PackageFactory(
+        hotel=hotel,
+        agency=agency,
+        origin=origin,
+        outbound_flight_id=10,
+        outbound_flight_date="2026-10-10T09:00:00Z",
+        return_flight_id=11,
+        return_flight_date="2026-10-17T09:00:00Z",
+        name="Escapada de prueba",
+        description="Una escapada breve.",
+        price="125000.50",
+    )
+    data = {
+        "price": "235000.50",
+    }
+
+    response = patch_request(
+        reverse("package-detail", kwargs={"pk": package.pk}), data, user=user
+    )
+
+    assert response.status_code == HTTP_403_FORBIDDEN
+    package.refresh_from_db()
+
+    assert package.price == Decimal("125000.50")
+
+
+@pytest.mark.django_db
+def test_admin_can_partially_update_package():
+    agency = AgencyFactory(name="Andes Travel")
+    user = User.objects.create_user(
+        email="agency@mail.com",
+        password="123",
+        name="Agencia",
+        user_type=UserType.ADMIN,
+    )
+    hotel = HotelFactory()
+    origin = CityFactory(name="Buenos Aires")
+    package = PackageFactory(
+        hotel=hotel,
+        agency=agency,
+        origin=origin,
+        outbound_flight_id=10,
+        outbound_flight_date="2026-10-10T09:00:00Z",
+        return_flight_id=11,
+        return_flight_date="2026-10-17T09:00:00Z",
+        name="Escapada de prueba",
+        description="Una escapada breve.",
+        price="125000.50",
+    )
+    data = {
+        "price": "235000.50",
+    }
+
+    response = patch_request(
+        reverse("package-detail", kwargs={"pk": package.pk}), data, user=user
+    )
+
+    assert response.status_code == HTTP_200_OK
+    package.refresh_from_db()
+
+    assert package.price == Decimal("235000.50")

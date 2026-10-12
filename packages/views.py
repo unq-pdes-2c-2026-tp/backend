@@ -152,7 +152,7 @@ class PackageViewSet(ModelViewSet):
         base_permissions = super().get_permissions()
 
         if self.action in ("create", "update", "partial_update", "destroy"):
-            base_permissions.append(AgencyPermission())
+            base_permissions.append((AgencyPermission | AdminPermission)())
 
         return base_permissions
 
