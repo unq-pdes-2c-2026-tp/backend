@@ -43,7 +43,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Start Docker Compose services
-      run: docker compose up -d --build db
+      run: docker compose up -d --build db_ctv
     - name: Run django checks
       run: docker compose run --rm --no-deps --build -e DJANGO_SECRET_KEY="some-secret" ctv python manage.py check --fail-level=WARNING --settings ctv.settings.production
     - name: Check missing migrations
