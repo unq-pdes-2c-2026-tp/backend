@@ -1,14 +1,16 @@
 services:
-  db:
+
+  db_ctv:
     image: mysql:latest
     restart: always
     ports:
-      - "3306:3306"
+      - "${MYSQL_CTV_PORT}:${MYSQL_CTV_PORT}"
     environment:
-      MYSQL_ROOT_PASSWORD: ctv_django
-      MYSQL_DATABASE: ctv
-      MYSQL_USER: ctv_django
-      MYSQL_PASSWORD: ctv_django
+      MYSQL_ROOT_PASSWORD: ${MYSQL_CTV_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_CTV_DATABASE}
+      MYSQL_USER: ${MYSQL_CTV_USER}
+      MYSQL_PASSWORD: ${MYSQL_CTV_PASSWORD}
+      MYSQL_TCP_PORT: ${MYSQL_CTV_PORT}
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -21,20 +23,24 @@ services:
     build: .
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:4000"
+             python manage.py runserver 0.0.0.0:${DJANGO_CTV_PORT}"
     ports:
-      - "4000:4000"
+      - "${DJANGO_CTV_PORT}:${DJANGO_CTV_PORT}"
     volumes:
       - ./media:/app/media
     environment:
-      - DB_HOST=db
-      - DB_NAME=ctv
-      - DB_USER=ctv_django
-      - DB_PASSWORD=ctv_django
+      - DB_HOST=db_ctv
+      - DB_NAME=${MYSQL_CTV_DATABASE}
+      - DB_USER=${MYSQL_CTV_USER}
+      - DB_PASSWORD=${MYSQL_CTV_PASSWORD}
+      - DB_PORT=${MYSQL_CTV_PORT}
+      - DJANGO_SECRET_KEY=${DJANGO_CTV_SECRET_KEY}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_CTV_SETTINGS_MODULE}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
-      db:
+      db_ctv:
           condition: service_healthy
+
 volumes:
   mysql_data:
