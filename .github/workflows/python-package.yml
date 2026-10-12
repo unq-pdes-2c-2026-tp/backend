@@ -30,6 +30,16 @@ jobs:
 
   django_checks:
     runs-on: ubuntu-latest
+    env:
+      MYSQL_CTV_ROOT_PASSWORD: pwdctvroot
+      MYSQL_CTV_DATABASE: ctv
+      MYSQL_CTV_USER: ctv
+      MYSQL_CTV_PASSWORD: ctv
+      MYSQL_CTV_PORT: 3307
+      DJANGO_CTV_SECRET_KEY: "super-secret-key"
+      DJANGO_CTV_SETTINGS_MODULE: "ctv.settings.production"
+      DJANGO_CTV_PORT: 4001
+
     steps:
     - uses: actions/checkout@v4
     - name: Start Docker Compose services
