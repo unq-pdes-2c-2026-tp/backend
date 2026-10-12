@@ -1,4 +1,6 @@
+import logging
 from datetime import date
+from urllib.parse import urljoin
 
 import requests
 from django.conf import settings
@@ -54,6 +56,9 @@ from users.permissions import (
 )
 
 User = get_user_model()
+
+
+logger = logging.getLogger(__name__)
 
 
 class AgencyViewSet(ModelViewSet):
@@ -163,11 +168,13 @@ class PackageViewSet(ModelViewSet):
 class FlightListView(APIView):
     def get(self, request):
         try:
+            logger.info(f"Request to {urljoin(settings.FLIGHTS_API_URL, 'vuelos/')}")
             response = requests.get(
-                settings.FLIGHTS_API_URL + "vuelos/",
+                urljoin(settings.FLIGHTS_API_URL, "vuelos/"),
                 params={"search": request.query_params.get("search", "")},
                 timeout=5,
             )
+            logger.info(f"Response: {response.status_code} {response.json()}")
             response.raise_for_status()
         except requests.RequestException as error:
             return Response(
