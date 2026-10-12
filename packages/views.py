@@ -135,6 +135,7 @@ class PackageViewSet(ModelViewSet):
     queryset = Package.objects.select_related("agency", "hotel").all()
     serializer_class = PackageSerializer
     filterset_class = PackageFilterSet
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -144,9 +145,12 @@ class PackageViewSet(ModelViewSet):
         return queryset
 
     def get_permissions(self):
+        base_permissions = super().get_permissions()
+
         if self.action in ("create", "update", "partial_update", "destroy"):
-            return [IsAuthenticated(), AgencyPermission()]
-        return super().get_permissions()
+            base_permissions.append(AgencyPermission())
+
+        return base_permissions
 
     def perform_create(self, serializer):
         if self.request.user.agency_id is None:

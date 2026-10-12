@@ -3,7 +3,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 from django.urls import reverse
-from rest_framework.status import HTTP_201_CREATED, HTTP_403_FORBIDDEN, HTTP_200_OK
+from rest_framework.status import (
+    HTTP_201_CREATED,
+    HTTP_403_FORBIDDEN,
+    HTTP_200_OK,
+    HTTP_401_UNAUTHORIZED,
+)
 
 from packages.models import Package
 from packages.tests.factories import (
@@ -161,3 +166,10 @@ def test_package_list_filter_by_agency_id():
     response_data = response.json()
     assert len(response_data) == 1
     assert response_data[0]["id"] == package2.pk
+
+
+@pytest.mark.django_db
+def test_package_list_requires_authentication():
+    response = get(reverse("package-list"))
+
+    assert response.status_code == HTTP_401_UNAUTHORIZED
