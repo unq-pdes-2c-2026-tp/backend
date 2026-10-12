@@ -1,9 +1,7 @@
 import logging
 from datetime import date
-from urllib.parse import urljoin
 
 import requests
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, Value, Count, Avg
 from django.db.models.fields import DecimalField
@@ -30,6 +28,7 @@ from packages.filters import (
     HotelFilterSet,
     PackageFilterSet,
 )
+from packages.flight_api_client import FlightAPIClient
 from packages.models import (
     Agency,
     Hotel,
@@ -167,28 +166,6 @@ class PackageViewSet(ModelViewSet):
 
 class FlightListView(APIView):
     def get(self, request):
-        try:
-            logger.info(f"Request to {urljoin(settings.FLIGHTS_API_URL, 'vuelos/')}")
-            response = requests.get(
-                urljoin(settings.FLIGHTS_API_URL, "vuelos/"),
-                params={"search": request.query_params.get("search", "")},
-                timeout=5,
-            )
-            logger.info(f"Response: {response.status_code} {response.json()}")
-            response.raise_for_status()
-        except requests.RequestException as error:
-            return Response(
-                {
-                    "detail": "No se pudo consultar la API de vuelos.",
-                    "error": str(error),
-                },
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
-
-        payload = response.json()
-        flights = (
-            payload.get("results", payload) if isinstance(payload, dict) else payload
-        )
         date_from = request.query_params.get("date_from")
         date_to = request.query_params.get("date_to")
         try:
@@ -199,6 +176,23 @@ class FlightListView(APIView):
                 {"detail": "Las fechas deben usar el formato YYYY-MM-DD."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        try:
+            payload = FlightAPIClient().get_flights(
+                request.query_params.get("search", "")
+            )
+        except requests.RequestException as error:
+            return Response(
+                {
+                    "detail": "No se pudo consultar la API de vuelos.",
+                    "error": str(error),
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        flights = (
+            payload.get("results", payload) if isinstance(payload, dict) else payload
+        )
 
         if date_from or date_to:
             flights = [

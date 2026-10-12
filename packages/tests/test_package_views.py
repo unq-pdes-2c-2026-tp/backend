@@ -1,5 +1,5 @@
 from decimal import Decimal
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from django.urls import reverse
@@ -23,17 +23,11 @@ from users.models import User
 
 
 @pytest.mark.django_db
-@patch("packages.serializers.requests.get")
+@patch("packages.serializers.FlightAPIClient.get_flight")
 def test_agency_can_create_package(mock_get):
     mock_get.side_effect = [
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
-        ),
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"},
-        ),
+        {"origen": "Buenos Aires", "destino": "Bariloche"},
+        {"origen": "Bariloche", "destino": "Buenos Aires"},
     ]
     agency = AgencyFactory(name="Andes Travel")
     user = User.objects.create_user(
@@ -68,17 +62,11 @@ def test_agency_can_create_package(mock_get):
 
 
 @pytest.mark.django_db
-@patch("packages.serializers.requests.get")
+@patch("packages.serializers.FlightAPIClient.get_flight")
 def test_package_requires_return_flight_to_reverse_route(mock_get):
     mock_get.side_effect = [
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
-        ),
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Mendoza", "destino": "Buenos Aires"},
-        ),
+        {"origen": "Buenos Aires", "destino": "Bariloche"},
+        {"origen": "Mendoza", "destino": "Buenos Aires"},
     ]
     agency = AgencyFactory(name="Andes Travel")
     user = User.objects.create_user(
@@ -176,17 +164,11 @@ def test_package_list_requires_authentication():
 
 
 @pytest.mark.django_db
-@patch("packages.serializers.requests.get")
+@patch("packages.serializers.FlightAPIClient.get_flight")
 def test_agency_can_update_package(mock_get):
     mock_get.side_effect = [
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
-        ),
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"},
-        ),
+        {"origen": "Buenos Aires", "destino": "Bariloche"},
+        {"origen": "Bariloche", "destino": "Buenos Aires"},
     ]
     agency = AgencyFactory(name="Andes Travel")
     user = User.objects.create_user(
@@ -236,18 +218,7 @@ def test_agency_can_update_package(mock_get):
 
 
 @pytest.mark.django_db
-@patch("packages.serializers.requests.get")
-def test_agency_can_partially_update_package(mock_get):
-    mock_get.side_effect = [
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
-        ),
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"},
-        ),
-    ]
+def test_agency_can_partially_update_package():
     agency = AgencyFactory(name="Andes Travel")
     user = User.objects.create_user(
         email="agency@mail.com",
@@ -285,17 +256,11 @@ def test_agency_can_partially_update_package(mock_get):
 
 
 @pytest.mark.django_db
-@patch("packages.serializers.requests.get")
+@patch("packages.serializers.FlightAPIClient.get_flight")
 def test_agency_field_is_ignored_on_put(mock_get):
     mock_get.side_effect = [
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Buenos Aires", "destino": "Bariloche"},
-        ),
-        Mock(
-            status_code=200,
-            json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"},
-        ),
+        {"origen": "Buenos Aires", "destino": "Bariloche"},
+        {"origen": "Bariloche", "destino": "Buenos Aires"},
     ]
     agency = AgencyFactory(name="Andes Travel")
     other_agency = AgencyFactory(name="Travel")
