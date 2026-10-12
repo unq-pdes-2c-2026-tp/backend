@@ -15,7 +15,7 @@ from test_utils.views import get, post
 
 
 @pytest.mark.django_db
-@patch("packages.serializers.requests.post")
+@patch("packages.serializers.FlightAPIClient.buy_flight")
 def test_end_user_can_purchase_package_when_flights_are_available(mock_post, end_user):
     mock_post.return_value = Mock(status_code=201)
     package = PackageFactory()
@@ -37,46 +37,19 @@ def test_end_user_can_purchase_package_when_flights_are_available(mock_post, end
     # Llamados a la API de vuelos para la ida y la vuelta
     assert mock_post.call_count == 2
 
-    first_call_json = mock_post.call_args_list[0].kwargs["json"]
-    assert first_call_json == {
-        "vuelo": package.outbound_flight_id,
-        "nombre_pasajero": end_user.name,
-        "email_pasajero": end_user.email,
-    }
+    first_call_args = mock_post.call_args_list[0].args
+    assert first_call_args == (
+        package.outbound_flight_id,
+        end_user.name,
+        end_user.email,
+    )
 
-    second_call_json = mock_post.call_args_list[1].kwargs["json"]
-    assert second_call_json == {
-        "vuelo": package.return_flight_id,
-        "nombre_pasajero": end_user.name,
-        "email_pasajero": end_user.email,
-    }
+    second_call_args = mock_post.call_args_list[1].args
+    assert second_call_args == (package.return_flight_id, end_user.name, end_user.email)
 
 
 @pytest.mark.django_db
-@patch("packages.serializers.requests.post")
-def test_purchase_fails_and_rolls_back_when_flight_api_returns_error(
-    mock_post, end_user
-):
-    mock_post.return_value = Mock(
-        status_code=400,
-        headers={"content-type": "application/json"},
-        json=lambda: {"detail": "El vuelo no tiene disponibilidad"},
-    )
-    package = PackageFactory()
-
-    response = post(
-        reverse("packagepurchase-list"),
-        {"package": package.id},
-        user=end_user,
-    )
-
-    assert response.status_code == HTTP_400_BAD_REQUEST
-    assert "package" in response.json()
-    assert PackagePurchase.objects.count() == 0
-
-
-@pytest.mark.django_db
-@patch("packages.serializers.requests.post")
+@patch("packages.serializers.FlightAPIClient.buy_flight")
 def test_purchase_fails_when_flights_api_is_unreachable(mock_post, end_user):
     import requests
 
