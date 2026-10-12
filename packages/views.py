@@ -26,6 +26,7 @@ from packages.aggregation import aggregate_package_purchase, aggregate_package_r
 from packages.filters import (
     AgencyFilterSet,
     HotelFilterSet,
+    PackageFilterSet,
 )
 from packages.models import (
     Agency,
@@ -45,6 +46,7 @@ from packages.serializers import (
     TopAgencyByRevenueSerializer,
     AgencyDetailedSerializer,
 )
+from users.constants import UserType
 from users.permissions import (
     AdminPermission,
     AgencyPermission,
@@ -132,6 +134,14 @@ class HotelViewSet(ReadOnlyModelViewSet):
 class PackageViewSet(ModelViewSet):
     queryset = Package.objects.select_related("agency", "hotel").all()
     serializer_class = PackageSerializer
+    filterset_class = PackageFilterSet
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+        if user.user_type == UserType.AGENCY:
+            queryset = queryset.filter(agency_id=user.agency_id)
+        return queryset
 
     def get_permissions(self):
         if self.action in ("create", "update", "partial_update", "destroy"):

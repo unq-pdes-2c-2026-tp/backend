@@ -1,12 +1,18 @@
-import pytest
 from decimal import Decimal
-from django.urls import reverse
 from unittest.mock import Mock, patch
-from rest_framework.status import HTTP_201_CREATED, HTTP_403_FORBIDDEN
 
-from packages.models import Agency, City, Package
-from packages.tests.factories import HotelFactory
-from test_utils.views import post
+import pytest
+from django.urls import reverse
+from rest_framework.status import HTTP_201_CREATED, HTTP_403_FORBIDDEN, HTTP_200_OK
+
+from packages.models import Package
+from packages.tests.factories import (
+    HotelFactory,
+    AgencyFactory,
+    CityFactory,
+    PackageFactory,
+)
+from test_utils.views import post, get
 from users.constants import UserType
 from users.models import User
 
@@ -24,7 +30,7 @@ def test_agency_can_create_package(mock_get):
             json=lambda: {"origen": "Bariloche", "destino": "Buenos Aires"},
         ),
     ]
-    agency = Agency.objects.create(name="Andes Travel")
+    agency = AgencyFactory(name="Andes Travel")
     user = User.objects.create_user(
         email="agency@mail.com",
         password="123",
@@ -33,7 +39,7 @@ def test_agency_can_create_package(mock_get):
         agency=agency,
     )
     hotel = HotelFactory()
-    origin = City.objects.create(name="Buenos Aires")
+    origin = CityFactory(name="Buenos Aires")
     data = {
         "hotel": hotel.id,
         "origin": origin.id,
@@ -69,7 +75,7 @@ def test_package_requires_return_flight_to_reverse_route(mock_get):
             json=lambda: {"origen": "Mendoza", "destino": "Buenos Aires"},
         ),
     ]
-    agency = Agency.objects.create(name="Andes Travel")
+    agency = AgencyFactory(name="Andes Travel")
     user = User.objects.create_user(
         email="agency-route@mail.com",
         password="123",
@@ -78,7 +84,7 @@ def test_package_requires_return_flight_to_reverse_route(mock_get):
         agency=agency,
     )
     hotel = HotelFactory()
-    origin = City.objects.create(name="Buenos Aires")
+    origin = CityFactory(name="Buenos Aires")
     data = {
         "hotel": hotel.id,
         "origin": origin.id,
@@ -100,7 +106,7 @@ def test_package_requires_return_flight_to_reverse_route(mock_get):
 @pytest.mark.django_db
 def test_non_agency_cannot_create_package(end_user):
     hotel = HotelFactory()
-    origin = City.objects.create(name="Buenos Aires")
+    origin = CityFactory(name="Buenos Aires")
     data = {
         "hotel": hotel.id,
         "origin": origin.id,
@@ -116,3 +122,42 @@ def test_non_agency_cannot_create_package(end_user):
     response = post(reverse("package-list"), data, user=end_user)
 
     assert response.status_code == HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+def test_package_list_does_not_include_packages_of_other_agencies():
+    agency = AgencyFactory(name="Andes Travel")
+    other_agency = AgencyFactory(name="Andes Travel")
+    user = User.objects.create_user(
+        email="agency@mail.com",
+        password="123",
+        name="Agencia",
+        user_type=UserType.AGENCY,
+        agency=agency,
+    )
+    PackageFactory(agency=other_agency, name="old name")
+    response = get(reverse("package-list"), user=user)
+
+    assert response.status_code == HTTP_200_OK
+    assert response.json() == []
+
+
+@pytest.mark.django_db
+def test_package_list_filter_by_agency_id():
+    agency = AgencyFactory(name="Andes Travel")
+    other_agency = AgencyFactory(name="Andes Travel")
+    user = User.objects.create_user(
+        email="agency@mail.com",
+        password="123",
+        name="Agencia",
+        user_type=UserType.AGENCY,
+        agency=agency,
+    )
+    PackageFactory(agency=other_agency, name="old name")
+    package2: Package = PackageFactory(agency=agency, name="old name")
+    response = get(reverse("package-list"), params={"agency_id": agency.pk}, user=user)
+
+    assert response.status_code == HTTP_200_OK
+    response_data = response.json()
+    assert len(response_data) == 1
+    assert response_data[0]["id"] == package2.pk

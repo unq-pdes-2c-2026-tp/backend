@@ -1,7 +1,8 @@
 from django.db.models import Q
 from django_filters import rest_framework as filters
+from rest_framework import serializers
 
-from packages.models import Agency, Hotel
+from packages.models import Agency, Hotel, Package
 
 
 class AgencyFilterSet(filters.FilterSet):
@@ -34,3 +35,18 @@ class HotelFilterSet(filters.FilterSet):
             | Q(city__name__icontains=value)
         )
         return qs.filter(search_filter)
+
+
+class PackageFilterSet(filters.FilterSet):
+    agency_id = filters.CharFilter(method="filter_by_agency")
+
+    class Meta:
+        model = Package
+        fields = ()
+
+    def filter_by_agency(self, qs, name, value):
+        try:
+            int(value)
+        except ValueError:
+            raise serializers.ValidationError(f"Invalid filter value: {value}")
+        return qs.filter(agency_id=value)
