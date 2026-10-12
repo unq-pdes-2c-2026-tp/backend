@@ -343,3 +343,92 @@ def test_agency_field_is_ignored_on_put(mock_get):
 
     assert package.price == Decimal("235000.50")
     assert package.outbound_flight_date.day == 12
+
+
+@pytest.mark.django_db
+def test_package_list_filter_by_search_matches_name():
+    agency = AgencyFactory(name="Andes Travel")
+    user = User.objects.create_user(
+        email="agency@mail.com",
+        password="123",
+        name="Agencia",
+        user_type=UserType.AGENCY,
+        agency=agency,
+    )
+    PackageFactory(agency=agency, name="poquetito")
+    package2: Package = PackageFactory(agency=agency, name="Paquetito")
+    response = get(reverse("package-list"), params={"search": "paque"}, user=user)
+
+    assert response.status_code == HTTP_200_OK
+    response_data = response.json()
+    assert len(response_data) == 1
+    assert response_data[0]["id"] == package2.pk
+
+
+@pytest.mark.django_db
+def test_package_list_filter_by_search_matches_description():
+    agency = AgencyFactory(name="Andes Travel")
+    user = User.objects.create_user(
+        email="agency@mail.com",
+        password="123",
+        name="Agencia",
+        user_type=UserType.AGENCY,
+        agency=agency,
+    )
+    PackageFactory(agency=agency, name="poquetito", description="muy lindo")
+    package2: Package = PackageFactory(
+        agency=agency, name="Paquetito", description="muy feo"
+    )
+    response = get(reverse("package-list"), params={"search": "feo"}, user=user)
+
+    assert response.status_code == HTTP_200_OK
+    response_data = response.json()
+    assert len(response_data) == 1
+    assert response_data[0]["id"] == package2.pk
+
+
+@pytest.mark.django_db
+def test_package_list_filter_by_search_matches_agency_name():
+    agency1 = AgencyFactory(name="Andes Travel")
+    agency2 = AgencyFactory(name="Andes viajes")
+    user = User.objects.create_user(
+        email="comprador@mail.com",
+        password="123",
+        name="comprador",
+        user_type=UserType.END_USER,
+    )
+    PackageFactory(agency=agency1, name="poquetito", description="muy lindo")
+    package2: Package = PackageFactory(
+        agency=agency2, name="Paquetito", description="muy feo"
+    )
+    response = get(reverse("package-list"), params={"search": "viaje"}, user=user)
+
+    assert response.status_code == HTTP_200_OK
+    response_data = response.json()
+    assert len(response_data) == 1
+    assert response_data[0]["id"] == package2.pk
+
+
+@pytest.mark.django_db
+def test_package_list_filter_by_search_matches_hotel_name():
+    agency = AgencyFactory(name="Andes Travel")
+    hotel1 = HotelFactory(name="resort loquillo")
+    hotel2 = HotelFactory(name="caseron")
+    user = User.objects.create_user(
+        email="comprador@mail.com",
+        password="123",
+        name="comprador",
+        user_type=UserType.END_USER,
+    )
+    PackageFactory(
+        agency=agency, hotel=hotel2, name="poquetito", description="muy lindo"
+    )
+    package2: Package = PackageFactory(
+        agency=agency, hotel=hotel1, name="Paquetito", description="muy feo"
+    )
+    response = get(reverse("package-list"), params={"search": "loqui"}, user=user)
+
+    assert response.status_code == HTTP_200_OK
+    response_data = response.json()
+    assert len(response_data) == 1
+    assert response_data[0]["id"] == package2.pk
