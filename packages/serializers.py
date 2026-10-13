@@ -1,9 +1,10 @@
 import requests
-from django.conf import settings
 from django.db import transaction
-from rest_framework import serializers, status
+from requests import Response
+from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from packages.flight_api_client import FlightAPIClient
 from packages.models import (
     Agency,
     Hotel,
@@ -98,31 +99,30 @@ class PackageSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, attrs):
-        if attrs["return_flight_date"] <= attrs["outbound_flight_date"]:
+        if self._get_field(attrs, "return_flight_date") <= self._get_field(
+            attrs, "outbound_flight_date"
+        ):
             raise serializers.ValidationError(
                 {"return_flight_date": "Debe ser posterior a la fecha de ida."}
             )
 
         try:
-            outbound_response = requests.get(
-                f"{settings.FLIGHTS_API_URL}vuelos/{attrs['outbound_flight_id']}/",
-                timeout=5,
+            flight_api_client = FlightAPIClient()
+            outbound_flight = self._validate_flight_id(
+                flight_api_client, attrs, "outbound_flight_id"
             )
-            return_response = requests.get(
-                f"{settings.FLIGHTS_API_URL}vuelos/{attrs['return_flight_id']}/",
-                timeout=5,
+            return_flight = self._validate_flight_id(
+                flight_api_client, attrs, "return_flight_id"
             )
-            outbound_response.raise_for_status()
-            return_response.raise_for_status()
         except requests.RequestException as error:
             raise serializers.ValidationError(
                 {
                     "outbound_flight_id": "No se pudieron validar los vuelos seleccionados."
                 }
             ) from error
+        outbound_flight = outbound_flight or dict()
+        return_flight = return_flight or dict()
 
-        outbound_flight = outbound_response.json()
-        return_flight = return_response.json()
         if outbound_flight.get("origen") != return_flight.get(
             "destino"
         ) or outbound_flight.get("destino") != return_flight.get("origen"):
@@ -135,6 +135,21 @@ class PackageSerializer(serializers.ModelSerializer):
                 }
             )
         return attrs
+
+    def _validate_flight_id(
+        self, flight_api_client: FlightAPIClient, attrs, flight_id_field
+    ) -> Response | None:
+        response = None
+        if flight_id_field in attrs:
+            response = flight_api_client.get_flight(attrs[flight_id_field])
+
+        return response
+
+    def _get_field(self, data, field_name):
+        return data.get(
+            field_name,
+            getattr(self.instance, field_name) if self.instance is not None else None,
+        )
 
 
 class PackagePurchaseSerializer(serializers.ModelSerializer):
@@ -152,42 +167,26 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "user", "datetime", "price")
 
-    def _comprar_vuelo(self, flight_id, user_name, user_email):
-        url = f"{settings.FLIGHTS_API_URL}vender/"
-        payload = {
-            "vuelo": flight_id,
-            "nombre_pasajero": user_name,
-            "email_pasajero": user_email,
-        }
+    def _buy_flight(
+        self, flight_api_client: FlightAPIClient, flight_id, user_name, user_email
+    ):
         try:
-            response = requests.post(url, json=payload, timeout=5)
+            flight_api_client.buy_flight(flight_id, user_name, user_email)
         except requests.RequestException as error:
             raise serializers.ValidationError(
                 {"package": "No se pudo comunicar con el servicio de vuelos."}
             ) from error
-
-        if response.status_code != status.HTTP_201_CREATED:
-            error_detail = (
-                response.json()
-                if response.headers.get("content-type") == "application/json"
-                else response.text
-            )
-            raise serializers.ValidationError(
-                {
-                    "package": f"Error al reservar el vuelo ID {flight_id}: {error_detail}"
-                }
-            )
 
     @transaction.atomic()
     def create(self, validated_data):
         package: Package = validated_data["package"]
         validated_data["price"] = package.price
         user = validated_data["user"]
-
+        client = FlightAPIClient()
         # Compra vuelo de ida
-        self._comprar_vuelo(package.outbound_flight_id, user.name, user.email)
+        self._buy_flight(client, package.outbound_flight_id, user.name, user.email)
         # Compra vuelo de vuelta
-        self._comprar_vuelo(package.return_flight_id, user.name, user.email)
+        self._buy_flight(client, package.return_flight_id, user.name, user.email)
 
         return super().create(validated_data)
 

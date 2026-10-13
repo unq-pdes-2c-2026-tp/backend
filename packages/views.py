@@ -1,7 +1,7 @@
+import logging
 from datetime import date
 
 import requests
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Sum, Value, Count, Avg
 from django.db.models.fields import DecimalField
@@ -26,7 +26,9 @@ from packages.aggregation import aggregate_package_purchase, aggregate_package_r
 from packages.filters import (
     AgencyFilterSet,
     HotelFilterSet,
+    PackageFilterSet,
 )
+from packages.flight_api_client import FlightAPIClient
 from packages.models import (
     Agency,
     Hotel,
@@ -45,6 +47,7 @@ from packages.serializers import (
     TopAgencyByRevenueSerializer,
     AgencyDetailedSerializer,
 )
+from users.constants import UserType
 from users.permissions import (
     AdminPermission,
     AgencyPermission,
@@ -52,6 +55,9 @@ from users.permissions import (
 )
 
 User = get_user_model()
+
+
+logger = logging.getLogger(__name__)
 
 
 class AgencyViewSet(ModelViewSet):
@@ -132,11 +138,23 @@ class HotelViewSet(ReadOnlyModelViewSet):
 class PackageViewSet(ModelViewSet):
     queryset = Package.objects.select_related("agency", "hotel").all()
     serializer_class = PackageSerializer
+    filterset_class = PackageFilterSet
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+        if user.user_type == UserType.AGENCY:
+            queryset = queryset.filter(agency_id=user.agency_id)
+        return queryset
 
     def get_permissions(self):
+        base_permissions = super().get_permissions()
+
         if self.action in ("create", "update", "partial_update", "destroy"):
-            return [IsAuthenticated(), AgencyPermission()]
-        return super().get_permissions()
+            base_permissions.append((AgencyPermission | AdminPermission)())
+
+        return base_permissions
 
     def perform_create(self, serializer):
         if self.request.user.agency_id is None:
@@ -148,26 +166,6 @@ class PackageViewSet(ModelViewSet):
 
 class FlightListView(APIView):
     def get(self, request):
-        try:
-            response = requests.get(
-                settings.FLIGHTS_API_URL + "vuelos/",
-                params={"search": request.query_params.get("search", "")},
-                timeout=5,
-            )
-            response.raise_for_status()
-        except requests.RequestException as error:
-            return Response(
-                {
-                    "detail": "No se pudo consultar la API de vuelos.",
-                    "error": str(error),
-                },
-                status=status.HTTP_502_BAD_GATEWAY,
-            )
-
-        payload = response.json()
-        flights = (
-            payload.get("results", payload) if isinstance(payload, dict) else payload
-        )
         date_from = request.query_params.get("date_from")
         date_to = request.query_params.get("date_to")
         try:
@@ -178,6 +176,23 @@ class FlightListView(APIView):
                 {"detail": "Las fechas deben usar el formato YYYY-MM-DD."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        try:
+            payload = FlightAPIClient().get_flights(
+                request.query_params.get("search", "")
+            )
+        except requests.RequestException as error:
+            return Response(
+                {
+                    "detail": "No se pudo consultar la API de vuelos.",
+                    "error": str(error),
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        flights = (
+            payload.get("results", payload) if isinstance(payload, dict) else payload
+        )
 
         if date_from or date_to:
             flights = [
