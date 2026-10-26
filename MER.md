@@ -1,4 +1,5 @@
 ```mermaid
+
 erDiagram
 LogEntry {
   signed_integer id pk
@@ -100,4 +101,22 @@ PackageReview {
   char review
   datetime datetime
 }
+Hotel }|--|| City: ""
+PackageReview }|--|| PackagePurchase: ""
+Token ||--|| User: ""
+Group }|--|{ User: ""
+Group }|--|{ Permission: ""
+LogEntry }|--|| User: ""
+LogEntry }|--|| ContentType: ""
+PackageFavorite }|--|| Package: ""
+PackageFavorite }|--|| User: ""
+PackagePurchase }|--|| Package: ""
+PackagePurchase }|--|| User: ""
+Package }|--|| Agency: ""
+Package }|--|| Hotel: ""
+Package }|--|| City: ""
+Permission }|--|{ User: ""
+Permission }|--|| ContentType: ""
+User }|--|| Agency: ""
+
 ```
