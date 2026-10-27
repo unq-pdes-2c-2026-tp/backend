@@ -18,6 +18,9 @@ class City(models.Model):
     class Meta:
         constraints = [UniqueConstraint(Lower("name"), name="city_name_lower_unique")]
 
+    def __str__(self):
+        return self.name
+
 
 class Hotel(models.Model):
     name = models.CharField(max_length=255)
