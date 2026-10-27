@@ -1,5 +1,4 @@
 ```mermaid
-
 erDiagram
 LogEntry {
   signed_integer id pk
@@ -118,5 +117,4 @@ Package }|--|| City: ""
 Permission }|--|{ User: ""
 Permission }|--|| ContentType: ""
 User }|--|| Agency: ""
-
 ```
