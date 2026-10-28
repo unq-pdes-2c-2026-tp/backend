@@ -5,8 +5,16 @@
 - Federico Martinez
 - Pablo Pissi
 
-## MER
-Ver acá: [link](MER.md)
+## ERM
+Ver acá: [link](ERM.md)
+
+### Update ERM
+
+You can update the ERM by running the following command:
+
+```bash
+./update_erm.sh
+```
 
 ## Run the project
 
