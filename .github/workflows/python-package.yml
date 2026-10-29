@@ -8,6 +8,10 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
 
 defaults:
   run:
@@ -83,17 +87,35 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
+        pip install coverage
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
+
+    - name: Run tests and generate coverage
       env:
         DJANGO_SETTINGS_MODULE: ctv.settings.ci
       run: |
-        pytest
+        coverage run --source=. -m pytest
+        coverage report
+        coverage xml
+    - name: SonarQube Cloud Scan
+      uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >-
+          -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+          -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+          -Dsonar.sources=.
+          -Dsonar.exclusions=.github/**,**/migrations/**,**/tests/**,**/test_*.py,**/*_test.py,**/.venv/**,**/venv/**,**/__pycache__/**,**/media/**
+          -Dsonar.tests=.
+          -Dsonar.python.coverage.reportPaths=coverage.xml
+          -Dsonar.test.inclusions=**/tests.py,**/test_*.py,**/*_tests.py
+          -Dsonar.python.version=3.10
 
 
   behave-test:
