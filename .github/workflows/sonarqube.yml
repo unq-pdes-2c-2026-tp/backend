@@ -14,12 +14,41 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_DATABASE: ctv
+          MYSQL_USER: ctv_django
+          MYSQL_PASSWORD: ctv_django
+          MYSQL_ROOT_PASSWORD: ctv_django
+        ports:
+          - 3306:3306
+        # Ensure the runner waits until MySQL is fully initialized before starting steps
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install coverage
 
+      - name: Run tests and generate coverage
+        env:
+          DJANGO_SETTINGS_MODULE: ctv.settings.ci
+        run: |
+          coverage run --source=. -m pytest
+          coverage report
+          coverage xml
       - name: SonarQube Cloud Scan
         uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
         env:
@@ -31,5 +60,6 @@ jobs:
             -Dsonar.sources=.
             -Dsonar.exclusions=**/migrations/**,**/tests/**,**/test_*.py,**/*_test.py,**/.venv/**,**/venv/**,**/__pycache__/**,**/media/**
             -Dsonar.tests=.
+            -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.test.inclusions=**/tests.py,**/test_*.py,**/*_tests.py
             -Dsonar.python.version=3.10
