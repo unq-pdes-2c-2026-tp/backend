@@ -29,7 +29,7 @@ jobs:
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.sources=.
-            -Dsonar.tests=tests/
-            -Dsonar.test.exclusions=**/tests/factories.py,**/tests/conftest.py
             -Dsonar.exclusions=**/migrations/**,**/tests/**,**/test_*.py,**/*_test.py,**/.venv/**,**/venv/**,**/__pycache__/**,**/media/**
+            -Dsonar.tests=.
+            -Dsonar.test.inclusions=**/tests.py,**/test_*.py,**/*_tests.py
             -Dsonar.python.version=3.10
