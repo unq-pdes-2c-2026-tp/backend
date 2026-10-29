@@ -28,6 +28,7 @@ services:
       - "${DJANGO_CTV_PORT}:${DJANGO_CTV_PORT}"
     volumes:
       - ./media:/app/media
+      - .:/app
     environment:
       - DB_HOST=db_ctv
       - DB_NAME=${MYSQL_CTV_DATABASE}

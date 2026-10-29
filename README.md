@@ -5,27 +5,15 @@
 - Federico Martinez
 - Pablo Pissi
 
-## MER
-https://drive.google.com/file/d/17IRqLVfETJJM6XQhZ-yz8pr5UnOzGdNK/view?usp=sharing
+## ERM
+Ver acá: [link](ERM.md)
 
-## Installation
+### Update ERM
 
-### Install mysql dependencies
+You can update the ERM by running the following command:
+
 ```bash
-sudo apt-get install python3-dev default-libmysqlclient-dev build-essential pkg-config
-```
-
-### Install project dependencies
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt  # use requirements-dev.txt for development
-```
-
-### Install pre-commit (development)
-```bash
-pre-commit install
-pre-commit install-hooks
+./update_erm.sh
 ```
 
 ## Run the project
@@ -33,11 +21,6 @@ pre-commit install-hooks
 ### Run the services
 ```bash
 docker compose up -d
-```
-
-### Run the server
-```bash
-python manage.py runserver
 ```
 
 ## Create migrations

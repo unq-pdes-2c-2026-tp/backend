@@ -7,17 +7,6 @@ from packages.models import City, Hotel
 
 
 HOTELS_ARGENTINA = {
-    "Alvear Palace Hotel": {
-        "city": "Buenos Aires",
-        "description": (
-            "Elegante hotel de lujo ubicado en el corazón de Recoleta, "
-            "reconocido por su arquitectura clásica, servicio refinado "
-            "y ambientes sofisticados."
-        ),
-        "photo_url": (
-            "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/30/b0/1b/8e/caption.jpg?w=1200&h=-1&s=1"
-        ),
-    },
     "Four Seasons Hotel Buenos Aires": {
         "city": "Buenos Aires",
         "description": (
@@ -40,19 +29,6 @@ HOTELS_ARGENTINA = {
             "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/1b/4a/bc/0e/vista-desde-el-parque.jpg?w=900&h=500&s=1"
         ),
     },
-    "Sofitel La Reserva Cardales": {
-        "city": "Campana",
-        "description": (
-            "Resort rodeado de naturaleza que ofrece una experiencia "
-            "tranquila y exclusiva, con amplios espacios verdes, "
-            "spa y actividades recreativas."
-        ),
-        "photo_url": (
-            "https://m.ahstatic.com/is/image/accorhotels/aja_p_4653-28:3by2?fmt=jpg&op_usm=1.75,0.3,2,0&"
-            "resMode=sharp2&iccEmbed=true&icc=sRGB&dpr=on,1.5&"
-            "wid=335&hei=223&qlt=80"
-        ),
-    },
     "Llao Llao Resort, Golf-Spa": {
         "city": "San Carlos de Bariloche",
         "description": (
@@ -62,17 +38,6 @@ HOTELS_ARGENTINA = {
         ),
         "photo_url": (
             "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/0d/80/96/ec/llao-llao-hotel-and-resort.jpg?w=900&h=500&s=1"
-        ),
-    },
-    "Correntoso Lake & River Hotel": {
-        "city": "Villa La Angostura",
-        "description": (
-            "Hotel boutique de estilo patagónico ubicado frente al "
-            "lago Correntoso, rodeado de bosques y paisajes naturales "
-            "ideales para una escapada tranquila."
-        ),
-        "photo_url": (
-            "https://www.correntoso.com/files/7616/28290453_ImageLargeWidth.avif"
         ),
     },
     "El Casco Art Hotel": {

@@ -30,4 +30,4 @@ DATABASES = {
     }
 }
 
-INSTALLED_APPS += ["behave_django"]
+INSTALLED_APPS += ["behave_django", "django_erd_generator"]
