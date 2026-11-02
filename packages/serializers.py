@@ -152,6 +152,13 @@ class PackageSerializer(serializers.ModelSerializer):
         )
 
 
+class PackageAdminSerializer(PackageSerializer):
+    agency = serializers.PrimaryKeyRelatedField(queryset=Agency.objects.all())
+
+    class Meta(PackageSerializer.Meta):
+        pass
+
+
 class PackagePurchaseSerializer(serializers.ModelSerializer):
     package = serializers.PrimaryKeyRelatedField(queryset=Package.objects.all())
     user = serializers.PrimaryKeyRelatedField(read_only=True)

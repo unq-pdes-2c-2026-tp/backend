@@ -46,6 +46,7 @@ from packages.serializers import (
     TopCityByReviewsSerializer,
     TopAgencyByRevenueSerializer,
     AgencyDetailedSerializer,
+    PackageAdminSerializer,
 )
 from users.constants import UserType
 from users.permissions import (
@@ -156,12 +157,28 @@ class PackageViewSet(ModelViewSet):
 
         return base_permissions
 
+    def get_serializer_class(self):
+        if (
+            self.action in ("create", "update", "partial_update")
+            and self.request.user.user_type == UserType.ADMIN
+        ):
+            return PackageAdminSerializer
+        return super().get_serializer_class()
+
     def perform_create(self, serializer):
-        if self.request.user.agency_id is None:
+        if (
+            self.request.user.user_type == UserType.AGENCY
+            and self.request.user.agency_id is None
+        ):
             raise serializers.ValidationError(
                 {"agency": "El usuario agencia debe tener una agencia asociada."}
             )
-        serializer.save(agency=self.request.user.agency)
+        if self.request.user.user_type == UserType.ADMIN:
+            agency = serializer.validated_data.get("agency")
+        else:
+            agency = self.request.user.agency
+
+        serializer.save(agency=agency)
 
 
 class FlightListView(APIView):
