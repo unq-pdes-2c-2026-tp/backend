@@ -471,3 +471,37 @@ def test_admin_can_partially_update_package():
     package.refresh_from_db()
 
     assert package.price == Decimal("235000.50")
+
+
+@pytest.mark.django_db
+@patch("packages.serializers.FlightAPIClient.get_flight")
+def test_admin_can_create_package(mock_get, admin_user):
+    mock_get.side_effect = [
+        {"origen": "Buenos Aires", "destino": "Bariloche"},
+        {"origen": "Bariloche", "destino": "Buenos Aires"},
+    ]
+    agency = AgencyFactory(name="Andes Travel")
+
+    hotel = HotelFactory()
+    origin = CityFactory(name="Buenos Aires")
+    data = {
+        "hotel": hotel.id,
+        "origin": origin.id,
+        "outbound_flight_id": 10,
+        "outbound_flight_date": "2026-10-10T09:00:00Z",
+        "return_flight_id": 11,
+        "return_flight_date": "2026-10-17T18:00:00Z",
+        "name": "Escapada de prueba",
+        "description": "Una escapada breve.",
+        "price": "125000.50",
+        "agency": agency.id,
+    }
+
+    response = post(reverse("package-list"), data, user=admin_user)
+
+    assert response.status_code == HTTP_201_CREATED
+    package = Package.objects.get(name="Escapada de prueba")
+    assert package.agency == agency
+    assert package.hotel == hotel
+    assert package.price == Decimal("125000.50")
+    assert response.json()["hotel_photo"] is None
