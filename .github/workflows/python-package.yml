@@ -111,7 +111,7 @@ jobs:
           -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
           -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
           -Dsonar.sources=.
-          -Dsonar.exclusions=.github/**,**/migrations/**,**/tests/**,**/test_*.py,**/*_test.py,**/.venv/**,**/venv/**,**/__pycache__/**,**/media/**
+          -Dsonar.exclusions=.github/**,**/migrations/**,**/tests/**,**/test_*.py,**/*_test.py,**/.venv/**,**/venv/**,**/__pycache__/**,**/media/**,packages/management/commands/init_defaults.py
           -Dsonar.tests=.
           -Dsonar.python.coverage.reportPaths=coverage.xml
           -Dsonar.test.inclusions=**/tests.py,**/test_*.py,**/*_tests.py
