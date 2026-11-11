@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -14,6 +15,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from users.managers import UserManager
+from users.observability.definitions import user_login_count, user_failed_login_count
 from users.serializers import (
     UserSerializer,
     LoginSerializer,
@@ -79,9 +81,14 @@ class LoginView(ObtainAuthToken):
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
-        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError as e:
+            user_failed_login_count.add(1)
+            raise e
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
+        user_login_count.add(1, {"user_type": user.get_user_type_display()})
         return Response(
             UserLoginSerializer(user, context={"request": request}).data,
             headers={"Authorization": token.key},

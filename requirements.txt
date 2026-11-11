@@ -20,3 +20,8 @@ django-filter==26.1
 python-dotenv==1.2.3
 Pillow==12.3.0
 requests==2.34.2
+
+# otel
+opentelemetry-api==1.45.2
+opentelemetry-sdk==1.45.2
+opentelemetry-exporter-otlp==1.45.2

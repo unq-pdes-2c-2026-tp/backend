@@ -3,6 +3,9 @@ from urllib.parse import urljoin
 from requests import Session
 from django.conf import settings
 
+from packages.observability.decorators import measure_time
+from packages.observability.definitions import flights_api_request_duration
+
 
 class FlightAPIClient:
     def __init__(self):
@@ -16,6 +19,7 @@ class FlightAPIClient:
 
         return self._session
 
+    @measure_time(flights_api_request_duration)
     def get_flights(self, search: str):
         params = {"search": search} if search else {}
         response = self.session.get(
@@ -26,6 +30,7 @@ class FlightAPIClient:
         response.raise_for_status()
         return response.json()
 
+    @measure_time(flights_api_request_duration)
     def get_flight(self, flight_id: int):
         response = self.session.get(
             urljoin(settings.FLIGHTS_API_URL, f"vuelos/{flight_id}/"),
@@ -34,6 +39,7 @@ class FlightAPIClient:
         response.raise_for_status()
         return response.json()
 
+    @measure_time(flights_api_request_duration)
     def buy_flight(self, flight_id, user_name, user_email):
         response = self.session.post(
             urljoin(settings.FLIGHTS_API_URL, "vender/"),
