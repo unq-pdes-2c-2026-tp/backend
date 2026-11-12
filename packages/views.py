@@ -238,6 +238,9 @@ class PackagePurchaseViewSet(
 
         return base_permissions
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
     @action(
         methods=["get"],
         detail=False,
