@@ -160,3 +160,7 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+OPENTELEMETRY_METRICS_ENDPOINT = os.environ.get(
+    "OPENTELEMETRY_METRICS_ENDPOINT", "http://otel-collector:4317"
+)
