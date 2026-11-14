@@ -35,6 +35,7 @@ from packages.models import (
     Package,
     PackagePurchase,
     City,
+    PackageFavorite,
 )
 from packages.serializers import (
     AgencySerializer,
@@ -47,6 +48,7 @@ from packages.serializers import (
     TopAgencyByRevenueSerializer,
     AgencyDetailedSerializer,
     PackageAdminSerializer,
+    PackageFavoriteSerializer,
 )
 from users.constants import UserType
 from users.permissions import (
@@ -308,3 +310,21 @@ class PackagePurchaseViewSet(
         )
 
         return Response(TopAgencyByRevenueSerializer(result, many=True).data)
+
+
+class PackageFavoriteViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
+    queryset = PackageFavorite.objects.select_related("package", "user").all()
+    serializer_class = PackageFavoriteSerializer
+    permission_classes = [IsAuthenticated, EndUserPermission]
+
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

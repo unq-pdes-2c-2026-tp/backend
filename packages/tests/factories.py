@@ -1,7 +1,15 @@
 import factory
 from decimal import Decimal
 from django.utils import timezone
-from packages.models import Agency, Hotel, City, Package, PackagePurchase, PackageReview
+from packages.models import (
+    Agency,
+    Hotel,
+    City,
+    Package,
+    PackagePurchase,
+    PackageReview,
+    PackageFavorite,
+)
 
 
 class AgencyFactory(factory.django.DjangoModelFactory):
@@ -56,3 +64,10 @@ class PackageReviewFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = PackageReview
+
+
+class PackageFavoriteFactory(factory.django.DjangoModelFactory):
+    package = factory.SubFactory(PackageFactory)
+
+    class Meta:
+        model = PackageFavorite

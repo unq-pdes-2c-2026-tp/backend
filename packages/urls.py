@@ -7,6 +7,7 @@ from packages.views import (
     HotelViewSet,
     PackageViewSet,
     PackagePurchaseViewSet,
+    PackageFavoriteViewSet,
 )
 
 router = routers.SimpleRouter()
@@ -14,6 +15,7 @@ router.register(r"agencies", AgencyViewSet)
 router.register(r"hotels", HotelViewSet)
 router.register(r"packages", PackageViewSet)
 router.register(r"purchases", PackagePurchaseViewSet)
+router.register(r"favorites", PackageFavoriteViewSet)
 
 
 urlpatterns = [
