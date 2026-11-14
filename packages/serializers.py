@@ -10,6 +10,7 @@ from packages.models import (
     Hotel,
     Package,
     PackagePurchase,
+    PackageFavorite,
     City,
 )
 from users.serializers import UserLiteSerializer
@@ -216,3 +217,35 @@ class TopCityByReviewsSerializer(serializers.Serializer):
 class TopAgencyByRevenueSerializer(serializers.Serializer):
     agency = AgencySerializer()
     total_revenue = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+
+class PackageFavoriteSerializer(serializers.ModelSerializer):
+    package = serializers.PrimaryKeyRelatedField(queryset=Package.objects.all())
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = PackageFavorite
+        fields = (
+            "id",
+            "package",
+            "user",
+            "datetime",
+        )
+        read_only_fields = ("id", "user", "datetime")
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        package = attrs.get("package")
+
+        if (
+            request
+            and package
+            and PackageFavorite.objects.filter(
+                user=request.user, package=package
+            ).exists()
+        ):
+            raise serializers.ValidationError(
+                {"package": "Este paquete ya se encuentra en favoritos."}
+            )
+
+        return attrs
