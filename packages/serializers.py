@@ -162,18 +162,29 @@ class PackageAdminSerializer(PackageSerializer):
 
 class PackagePurchaseSerializer(serializers.ModelSerializer):
     package = serializers.PrimaryKeyRelatedField(queryset=Package.objects.all())
+    package_detail = PackageSerializer(source="package", read_only=True)
     user = serializers.PrimaryKeyRelatedField(read_only=True)
+    user_detail = UserLiteSerializer(source="user", read_only=True)
 
     class Meta:
         model = PackagePurchase
         fields = (
             "id",
             "package",
+            "package_detail",
             "user",
+            "user_detail",
             "datetime",
             "price",
         )
-        read_only_fields = ("id", "user", "datetime", "price")
+        read_only_fields = (
+            "id",
+            "package_detail",
+            "user",
+            "user_detail",
+            "datetime",
+            "price",
+        )
 
     def _buy_flight(
         self, flight_api_client: FlightAPIClient, flight_id, user_name, user_email

@@ -6,7 +6,9 @@ from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_400_BAD_REQUEST,
+    HTTP_401_UNAUTHORIZED,
     HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
 )
 
 from packages.models import PackagePurchase
@@ -91,3 +93,80 @@ def test_list_purchases_returns_user_purchases(end_user):
     assert len(data) == 1
     assert data[0]["id"] == purchase.id
     assert data[0]["package"] == purchase.package.id
+
+
+@pytest.mark.django_db
+def test_list_purchases_returns_only_own_purchases_for_end_user(end_user, agency_user):
+    user_purchase = PackagePurchaseFactory(user=end_user)
+    PackagePurchaseFactory(user=agency_user)  # Compra asociada a otro usuario
+
+    response = get(reverse("packagepurchase-list"), user=end_user)
+
+    assert response.status_code == HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["id"] == user_purchase.id
+    assert data[0]["package"] == user_purchase.package.id
+
+
+@pytest.mark.django_db
+def test_list_purchases_returns_only_agency_sales_for_agency_user(
+    agency_user, end_user
+):
+    agency_package = PackageFactory(agency=agency_user.agency)
+    agency_sale = PackagePurchaseFactory(package=agency_package, user=end_user)
+    PackagePurchaseFactory(user=end_user)  # Venta de otra agencia
+
+    response = get(reverse("packagepurchase-list"), user=agency_user)
+
+    assert response.status_code == HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["id"] == agency_sale.id
+    assert data[0]["package"] == agency_package.id
+
+
+@pytest.mark.django_db
+def test_list_purchases_returns_all_purchases_for_admin(admin_user, end_user):
+    purchase_1 = PackagePurchaseFactory(user=end_user)
+    purchase_2 = PackagePurchaseFactory(user=end_user)
+
+    response = get(reverse("packagepurchase-list"), user=admin_user)
+
+    assert response.status_code == HTTP_200_OK
+    data = response.json()
+    assert len(data) == 2
+    assert {item["id"] for item in data} == {purchase_1.id, purchase_2.id}
+
+
+@pytest.mark.django_db
+def test_unauthenticated_user_cannot_list_purchases(end_user):
+    PackagePurchaseFactory(user=end_user)
+
+    response = get(reverse("packagepurchase-list"))
+
+    assert response.status_code in (HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN)
+
+
+@pytest.mark.django_db
+def test_end_user_cannot_retrieve_other_user_purchase(end_user, agency_user):
+    other_purchase = PackagePurchaseFactory(user=agency_user)
+
+    response = get(
+        reverse("packagepurchase-detail", args=[other_purchase.id]),
+        user=end_user,
+    )
+
+    assert response.status_code == HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_agency_user_cannot_retrieve_other_agency_sale(agency_user, end_user):
+    other_sale = PackagePurchaseFactory(user=end_user)
+
+    response = get(
+        reverse("packagepurchase-detail", args=[other_sale.id]),
+        user=agency_user,
+    )
+
+    assert response.status_code == HTTP_404_NOT_FOUND

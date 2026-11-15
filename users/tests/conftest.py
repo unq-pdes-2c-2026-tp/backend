@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth import get_user_model
 
+from packages.tests.factories import AgencyFactory
 from users.constants import UserType
 
 
@@ -12,17 +13,17 @@ def admin_user():
     return User.objects.create_user(
         email="admin@mail.com",
         password="123",
-        name="Pep",
-        user_type=UserType.ADMIN,
+        name="Admin",
+        user_type=UserType.ADMIN.value,
     )
 
 
 @pytest.fixture()
 def end_user():
     return User.objects.create_user(
-        email="test@mail.com",
+        email="enduser@mail.com",
         password="123",
-        name="Pep",
+        name="End User",
         user_type=UserType.END_USER.value,
     )
 
@@ -30,8 +31,9 @@ def end_user():
 @pytest.fixture()
 def agency_user():
     return User.objects.create_user(
-        email="test@mail.com",
+        email="agency@mail.com",
         password="123",
-        name="Pep",
+        name="Agency User",
         user_type=UserType.AGENCY.value,
+        agency=AgencyFactory(),
     )

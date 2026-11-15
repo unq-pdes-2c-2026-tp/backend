@@ -229,8 +229,26 @@ class PackagePurchaseViewSet(
     mixins.ListModelMixin,
     GenericViewSet,
 ):
-    queryset = PackagePurchase.objects.select_related("package", "user").all()
+    queryset = PackagePurchase.objects.select_related(
+        "package", "package__agency", "user"
+    ).all()
     serializer_class = PackagePurchaseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+
+        if user.user_type == UserType.END_USER:
+            return queryset.filter(user=user)
+
+        if user.user_type == UserType.AGENCY:
+            return queryset.filter(package__agency_id=user.agency_id)
+
+        if user.user_type == UserType.ADMIN:
+            return queryset
+
+        return queryset.none()
 
     def get_permissions(self):
         base_permissions = super().get_permissions()
