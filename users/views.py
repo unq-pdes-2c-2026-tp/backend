@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -24,6 +26,7 @@ from users.serializers import (
 )
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class UserViewSet(ModelViewSet):
@@ -85,10 +88,13 @@ class LoginView(ObtainAuthToken):
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
             user_failed_login_count.add(1)
+            logger.info(f"Login error: {e}")
             raise e
         user = serializer.validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
-        user_login_count.add(1, {"user_type": user.get_user_type_display()})
+        user_type_display = user.get_user_type_display()
+        user_login_count.add(1, {"user_type": user_type_display})
+        logger.info(f"Login for user {user.email} of type {user_type_display}")
         return Response(
             UserLoginSerializer(user, context={"request": request}).data,
             headers={"Authorization": token.key},

@@ -6,6 +6,7 @@ from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter,
 )
 from opentelemetry.instrumentation.django import DjangoInstrumentor
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from django.conf import settings
 
 
@@ -28,4 +29,7 @@ def configure_tracing():
 
     trace.set_tracer_provider(provider)
 
+    LoggingInstrumentor().instrument(
+        set_logging_format=True,
+    )
     DjangoInstrumentor().instrument()
