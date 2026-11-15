@@ -53,7 +53,7 @@ def test_post_user_fails_when_user_with_the_same_mail_exists(end_user):
     response = post(
         reverse("user-list"),
         {
-            "email": "test@mail.com",
+            "email": end_user.email,
             "user_type": UserType.END_USER.value,
             "name": "pepe",
             "password": "contra-seña",
@@ -113,8 +113,8 @@ def test_get_user(end_user):
     assert response.status_code == HTTP_200_OK
     assert response.json() == {
         "id": end_user.pk,
-        "name": "Pep",
-        "email": "test@mail.com",
+        "name": end_user.name,
+        "email": end_user.email,
         "user_type": end_user.user_type,
         "agency": None,
         "profile_picture": None,
