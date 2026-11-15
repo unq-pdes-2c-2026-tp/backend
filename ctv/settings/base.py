@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "drf_spectacular",
     "corsheaders",
+    "observability",
     "users",
     "packages",
 ]
@@ -144,8 +145,12 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "verbose": {
-            "format": "[{asctime}] {levelname} {name}: {message}",
-            "style": "{",
+            "format": (
+                "%(asctime)s %(levelname)s "
+                "[trace_id=%(otelTraceID)s "
+                "span_id=%(otelSpanID)s] "
+                "%(name)s: %(message)s"
+            ),
         },
     },
     "handlers": {

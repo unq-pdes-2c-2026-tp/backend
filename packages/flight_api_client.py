@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import urljoin
 
 from requests import Session
@@ -5,6 +6,9 @@ from django.conf import settings
 
 from packages.observability.decorators import measure_time
 from packages.observability.definitions import flights_api_request_duration
+
+
+logger = logging.getLogger(__name__)
 
 
 class FlightAPIClient:
@@ -21,6 +25,7 @@ class FlightAPIClient:
 
     @measure_time(flights_api_request_duration)
     def get_flights(self, search: str):
+        logger.info(f"get_flights: {search}")
         params = {"search": search} if search else {}
         response = self.session.get(
             urljoin(settings.FLIGHTS_API_URL, "vuelos/"),
@@ -32,6 +37,7 @@ class FlightAPIClient:
 
     @measure_time(flights_api_request_duration)
     def get_flight(self, flight_id: int):
+        logger.info("get_flight")
         response = self.session.get(
             urljoin(settings.FLIGHTS_API_URL, f"vuelos/{flight_id}/"),
             timeout=self._timeout,
@@ -41,6 +47,7 @@ class FlightAPIClient:
 
     @measure_time(flights_api_request_duration)
     def buy_flight(self, flight_id, user_name, user_email):
+        logger.info(f"buy_flight: {flight_id} {user_name} {user_email}")
         response = self.session.post(
             urljoin(settings.FLIGHTS_API_URL, "vender/"),
             json={
