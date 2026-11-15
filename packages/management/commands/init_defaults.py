@@ -106,18 +106,21 @@ class Command(BaseCommand):
             {
                 "email": "admin@gmail.com",
                 "user_type": UserType.ADMIN,
+                "name": "Admin",
                 "password": "admin",
                 "agency": None,
             },
             {
                 "email": "user@gmail.com",
                 "user_type": UserType.END_USER,
+                "name": "Comprador",
                 "password": "user",
                 "agency": None,
             },
             {
                 "email": "agency@gmail.com",
                 "user_type": UserType.AGENCY,
+                "name": "Agencia",
                 "password": "agency",
                 "agency": agency,
             },
