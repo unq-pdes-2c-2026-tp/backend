@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from random import choice, randint
@@ -11,6 +12,7 @@ from packages.models import Agency, Hotel, Package, City
 from users.constants import UserType
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -22,6 +24,9 @@ class Flight:
 class Command(BaseCommand):
     @transaction.atomic()
     def handle(self, *args, **options):
+        if Agency.objects.exists():
+            logger.warning("init_defaults skipped because data already exists")
+            return
         self._create_agencies()
         agency = Agency.objects.first()
         if agency is not None:
