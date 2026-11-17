@@ -60,6 +60,8 @@ class PackagePurchaseFactory(factory.django.DjangoModelFactory):
 
 
 class PackageReviewFactory(factory.django.DjangoModelFactory):
+    package_purchase = factory.SubFactory(PackagePurchaseFactory)
+    score = 8
     review = "some review"
 
     class Meta:

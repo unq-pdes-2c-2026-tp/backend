@@ -11,6 +11,7 @@ from packages.models import (
     Package,
     PackagePurchase,
     PackageFavorite,
+    PackageReview,
     City,
 )
 from users.serializers import UserLiteSerializer
@@ -67,6 +68,8 @@ class PackageSerializer(serializers.ModelSerializer):
     agency_name = serializers.CharField(source="agency.name", read_only=True)
     hotel_name = serializers.CharField(source="hotel.name", read_only=True)
     hotel_photo = serializers.SerializerMethodField()
+    avg_score = serializers.DecimalField(max_digits=3, decimal_places=1, read_only=True)
+    reviews_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Package
@@ -86,8 +89,18 @@ class PackageSerializer(serializers.ModelSerializer):
             "outbound_flight_date",
             "return_flight_id",
             "return_flight_date",
+            "avg_score",
+            "reviews_count",
         )
-        read_only_fields = ("id", "agency", "agency_name", "hotel_name", "hotel_photo")
+        read_only_fields = (
+            "id",
+            "agency",
+            "agency_name",
+            "hotel_name",
+            "hotel_photo",
+            "avg_score",
+            "reviews_count",
+        )
 
     def get_hotel_photo(self, package):
         if not package.hotel.photo:
@@ -160,11 +173,20 @@ class PackageAdminSerializer(PackageSerializer):
         pass
 
 
+class PackageReviewLiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PackageReview
+        fields = ("id", "score", "review", "datetime")
+
+
 class PackagePurchaseSerializer(serializers.ModelSerializer):
     package = serializers.PrimaryKeyRelatedField(queryset=Package.objects.all())
     package_detail = PackageSerializer(source="package", read_only=True)
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     user_detail = UserLiteSerializer(source="user", read_only=True)
+    reviews = PackageReviewLiteSerializer(
+        source="packagereview_set", many=True, read_only=True
+    )
 
     class Meta:
         model = PackagePurchase
@@ -176,6 +198,7 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
             "user_detail",
             "datetime",
             "price",
+            "reviews",
         )
         read_only_fields = (
             "id",
@@ -184,7 +207,15 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
             "user_detail",
             "datetime",
             "price",
+            "reviews",
         )
+
+    def to_representation(self, instance):
+        if hasattr(instance, "package_avg_score"):
+            instance.package.avg_score = instance.package_avg_score
+        if hasattr(instance, "package_reviews_count"):
+            instance.package.reviews_count = instance.package_reviews_count
+        return super().to_representation(instance)
 
     def _buy_flight(
         self, flight_api_client: FlightAPIClient, flight_id, user_name, user_email
@@ -260,3 +291,59 @@ class PackageFavoriteSerializer(serializers.ModelSerializer):
             )
 
         return attrs
+
+
+class PackageReviewSerializer(serializers.ModelSerializer):
+    package_purchase = serializers.PrimaryKeyRelatedField(
+        queryset=PackagePurchase.objects.all()
+    )
+    package_id = serializers.IntegerField(
+        source="package_purchase.package_id", read_only=True
+    )
+    package_name = serializers.CharField(
+        source="package_purchase.package.name", read_only=True
+    )
+    user_detail = UserLiteSerializer(source="package_purchase.user", read_only=True)
+
+    class Meta:
+        model = PackageReview
+        fields = (
+            "id",
+            "package_purchase",
+            "package_id",
+            "package_name",
+            "user_detail",
+            "score",
+            "review",
+            "datetime",
+        )
+        read_only_fields = (
+            "id",
+            "package_id",
+            "package_name",
+            "user_detail",
+            "datetime",
+        )
+
+    def validate_package_purchase(self, package_purchase):
+        request = self.context.get("request")
+        if request and package_purchase.user != request.user:
+            raise serializers.ValidationError(
+                "Solo puedes dejar reseñas sobre tus propias compras."
+            )
+
+        # Evitar duplicados
+        qs = PackageReview.objects.filter(package_purchase=package_purchase)
+        if self.instance:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError(
+                "Esta compra ya tiene una reseña registrada."
+            )
+
+        return package_purchase
+
+    def update(self, instance, validated_data):
+        # Evita que al editar se cambie la compra asociada
+        validated_data.pop("package_purchase", None)
+        return super().update(instance, validated_data)

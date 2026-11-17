@@ -36,6 +36,7 @@ from packages.models import (
     PackagePurchase,
     City,
     PackageFavorite,
+    PackageReview,
 )
 from packages.serializers import (
     AgencySerializer,
@@ -49,6 +50,7 @@ from packages.serializers import (
     AgencyDetailedSerializer,
     PackageAdminSerializer,
     PackageFavoriteSerializer,
+    PackageReviewSerializer,
 )
 from users.constants import UserType
 from users.permissions import (
@@ -139,7 +141,15 @@ class HotelViewSet(ReadOnlyModelViewSet):
 
 
 class PackageViewSet(ModelViewSet):
-    queryset = Package.objects.select_related("agency", "hotel").all()
+    queryset = (
+        Package.objects.select_related("agency", "hotel")
+        .annotate(
+            avg_score=Avg("packagepurchase__packagereview__score"),
+            reviews_count=Count("packagepurchase__packagereview"),
+        )
+        .order_by("-id")
+        .all()
+    )
     serializer_class = PackageSerializer
     filterset_class = PackageFilterSet
     permission_classes = [IsAuthenticated]
@@ -229,9 +239,16 @@ class PackagePurchaseViewSet(
     mixins.ListModelMixin,
     GenericViewSet,
 ):
-    queryset = PackagePurchase.objects.select_related(
-        "package", "package__agency", "user"
-    ).all()
+    queryset = (
+        PackagePurchase.objects.select_related("package", "package__agency", "user")
+        .prefetch_related("packagereview_set")
+        .annotate(
+            package_avg_score=Avg("package__packagepurchase__packagereview__score"),
+            package_reviews_count=Count("package__packagepurchase__packagereview"),
+        )
+        .order_by("-datetime")
+        .all()
+    )
     serializer_class = PackagePurchaseSerializer
     permission_classes = [IsAuthenticated]
 
@@ -346,3 +363,52 @@ class PackageFavoriteViewSet(
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class PackageReviewViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet,
+):
+    queryset = PackageReview.objects.select_related(
+        "package_purchase",
+        "package_purchase__package",
+        "package_purchase__package__agency",
+        "package_purchase__user",
+    ).all()
+    serializer_class = PackageReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = super().get_queryset()
+
+        # Filtros opcionales por query params (?package=1 o ?package_purchase=5)
+        package_id = self.request.query_params.get("package")
+        if package_id:
+            queryset = queryset.filter(package_purchase__package_id=package_id)
+
+        purchase_id = self.request.query_params.get("package_purchase")
+        if purchase_id:
+            queryset = queryset.filter(package_purchase_id=purchase_id)
+
+        if user.user_type == UserType.END_USER:
+            return queryset.filter(package_purchase__user=user)
+
+        if user.user_type == UserType.AGENCY:
+            return queryset.filter(package_purchase__package__agency_id=user.agency_id)
+
+        if user.user_type == UserType.ADMIN:
+            return queryset
+
+        return queryset.none()
+
+    def get_permissions(self):
+        base_permissions = super().get_permissions()
+
+        if self.action in ("create", "update", "partial_update"):
+            base_permissions.append(EndUserPermission())
+
+        return base_permissions
