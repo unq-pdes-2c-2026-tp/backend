@@ -6,5 +6,7 @@ class ObservabilityConfig(AppConfig):
 
     def ready(self):
         from observability.tracing import configure_tracing
+        from observability.logs import configure_logging
 
         configure_tracing()
+        configure_logging()

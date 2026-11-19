@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from django.db import transaction
 from requests import Response
@@ -15,6 +17,8 @@ from packages.models import (
     City,
 )
 from users.serializers import UserLiteSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class AgencySerializer(serializers.ModelSerializer):
@@ -223,6 +227,7 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
         try:
             flight_api_client.buy_flight(flight_id, user_name, user_email)
         except requests.RequestException as error:
+            logger.error(f"An error ocurred when buying flight {flight_id}: {error}")
             raise serializers.ValidationError(
                 {"package": "No se pudo comunicar con el servicio de vuelos."}
             ) from error
@@ -233,6 +238,9 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
         validated_data["price"] = package.price
         user = validated_data["user"]
         client = FlightAPIClient()
+        logger.info(
+            f"Buying outbound and return flights for user {user.email} package {package.name}"
+        )
         # Compra vuelo de ida
         self._buy_flight(client, package.outbound_flight_id, user.name, user.email)
         # Compra vuelo de vuelta
