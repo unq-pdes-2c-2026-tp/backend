@@ -12,7 +12,11 @@ from rest_framework.status import (
 )
 
 from packages.models import PackagePurchase
-from packages.tests.factories import PackageFactory, PackagePurchaseFactory
+from packages.tests.factories import (
+    PackageFactory,
+    PackagePurchaseFactory,
+    PackageReviewFactory,
+)
 from test_utils.views import get, post
 
 
@@ -170,3 +174,23 @@ def test_agency_user_cannot_retrieve_other_agency_sale(agency_user, end_user):
     )
 
     assert response.status_code == HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+def test_list_purchases_includes_user_reviews(end_user):
+    purchase = PackagePurchaseFactory(user=end_user)
+    review = PackageReviewFactory(
+        package_purchase=purchase,
+        score=9,
+        review="Muy buena experiencia",
+    )
+
+    response = get(reverse("packagepurchase-list"), user=end_user)
+
+    assert response.status_code == HTTP_200_OK
+    data = response.json()
+    assert len(data) == 1
+    assert len(data[0]["reviews"]) == 1
+    assert data[0]["reviews"][0]["id"] == review.id
+    assert data[0]["reviews"][0]["score"] == 9
+    assert data[0]["reviews"][0]["review"] == "Muy buena experiencia"
