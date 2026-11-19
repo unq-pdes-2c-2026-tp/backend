@@ -98,6 +98,7 @@ jobs:
     - name: Run tests and generate coverage
       env:
         DJANGO_SETTINGS_MODULE: ctv.settings.ci
+        OTEL_LOGS_ENABLED: 0
       run: |
         coverage run --source=. -m pytest
         coverage report
@@ -155,5 +156,6 @@ jobs:
     - name: Test with behave
       env:
         DJANGO_SETTINGS_MODULE: ctv.settings.ci
+        OTEL_LOGS_ENABLED: 0
       run: |
         python manage.py behave

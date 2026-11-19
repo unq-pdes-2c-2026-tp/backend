@@ -12,6 +12,8 @@ from opentelemetry.sdk.resources import Resource
 
 
 def configure_logging():
+    if not settings.OTEL_LOGS_ENABLED:
+        return
     logger_provider = LoggerProvider(
         resource=Resource.create(
             {
