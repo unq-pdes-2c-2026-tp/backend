@@ -3,7 +3,7 @@ Feature: user sign up rules
     evalua las reglas sobre la creación de usuarios
 
   Scenario Outline: ejemplo
-    Given un <usuario>
+    Given un payload de <usuario>
     Given una agencia
       When intenta crear una <cuenta>
      Then <result>

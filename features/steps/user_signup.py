@@ -4,14 +4,13 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 
-from packages.tests.factories import AgencyFactory
 from test_utils.views import post
 
 
 User = get_user_model()
 
 
-@given("un usuario final")
+@given("un payload de usuario final")
 def end_user(context):
     context.user_payload = {
         "email": "mail@mail.com",
@@ -21,7 +20,7 @@ def end_user(context):
     }
 
 
-@given("un usuario agencia")
+@given("un payload de usuario agencia")
 def agency_user(context):
     context.user_payload = {
         "email": "mail@mail.com",
@@ -31,7 +30,7 @@ def agency_user(context):
     }
 
 
-@given("un usuario administrador")
+@given("un payload de usuario administrador")
 def admin_user(context):
     context.user_payload = {
         "email": "mail@mail.com",
@@ -39,11 +38,6 @@ def admin_user(context):
         "name": "usuario",
         "password": settings.TESTING_PASSWORD,
     }
-
-
-@given("una agencia")
-def agency(context):
-    context.agency = AgencyFactory(name="viejo nombre")
 
 
 @when("intenta crear una cuenta sin agencia")
@@ -65,7 +59,10 @@ def create_user_with_agency(context):
 @then("un error de validacion es devuelto")
 def assert_400(context):
     assert context.response.status_code == HTTP_400_BAD_REQUEST
-    assert context.response.errors == 3
+    assert (
+        context.response.data["agency"][0]
+        == "This field is required for user type agency."
+    )
 
 
 @then("el usuario es creado y la agencia es nula")
@@ -73,7 +70,7 @@ def assert_user_created_with_agency_none(context):
     assert context.response.status_code == HTTP_201_CREATED
     assert User.objects.filter(name="usuario").exists()
     assert User.objects.filter(name="usuario").count() == 1
-    assert User.objects.get(name="usuario").agency is None
+    assert User.objects.get(name="usuario").agency is None, "noenone"
 
 
 @then("el usuario es creado y la agencia esta asociada")
