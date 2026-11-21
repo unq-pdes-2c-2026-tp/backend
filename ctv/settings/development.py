@@ -31,3 +31,4 @@ DATABASES = {
 }
 
 INSTALLED_APPS += ["behave_django", "django_erd_generator"]
+TESTING_PASSWORD = os.getenv("TESTING_PASSWORD")
