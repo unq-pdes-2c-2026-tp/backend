@@ -134,6 +134,7 @@ jobs:
           MYSQL_USER: ctv_django
           MYSQL_PASSWORD: ctv_django
           MYSQL_ROOT_PASSWORD: ctv_django
+          TESTING_PASSWORD: secure-pwd
         ports:
           - 3306:3306
         # Ensure the runner waits until MySQL is fully initialized before starting steps

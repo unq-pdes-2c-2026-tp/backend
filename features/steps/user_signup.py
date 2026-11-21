@@ -1,4 +1,5 @@
 from behave import given, when, then
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
@@ -16,7 +17,7 @@ def end_user(context):
         "email": "mail@mail.com",
         "user_type": 1,
         "name": "usuario",
-        "password": "contra-seña",
+        "password": settings.TESTING_PASSWORD,
     }
 
 
@@ -26,7 +27,7 @@ def agency_user(context):
         "email": "mail@mail.com",
         "user_type": 2,
         "name": "usuario",
-        "password": "contra-seña",
+        "password": settings.TESTING_PASSWORD,
     }
 
 
@@ -36,7 +37,7 @@ def admin_user(context):
         "email": "mail@mail.com",
         "user_type": 3,
         "name": "usuario",
-        "password": "contra-seña",
+        "password": settings.TESTING_PASSWORD,
     }
 
 
