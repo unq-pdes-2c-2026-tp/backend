@@ -44,7 +44,8 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"agency": ["This field is required for user type agency."]}
             )
-
+        if data.get("agency", None) is not None and user_type != UserType.AGENCY.value:
+            data["agency"] = None
         return data
 
 

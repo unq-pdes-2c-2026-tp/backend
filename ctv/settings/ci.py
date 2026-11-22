@@ -1,3 +1,5 @@
+import os
+
 from ctv.settings.base import *  # noqa F403
 from ctv.settings.base import INSTALLED_APPS
 
@@ -27,3 +29,5 @@ DATABASES = {
 }
 
 INSTALLED_APPS += ["behave_django"]
+
+TESTING_PASSWORD = os.getenv("TESTING_PASSWORD")

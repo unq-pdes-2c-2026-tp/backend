@@ -134,6 +134,7 @@ jobs:
           MYSQL_USER: ctv_django
           MYSQL_PASSWORD: ctv_django
           MYSQL_ROOT_PASSWORD: ctv_django
+
         ports:
           - 3306:3306
         # Ensure the runner waits until MySQL is fully initialized before starting steps
@@ -157,5 +158,7 @@ jobs:
       env:
         DJANGO_SETTINGS_MODULE: ctv.settings.ci
         OTEL_LOGS_ENABLED: 0
+        TESTING_PASSWORD: secure-pwd
+
       run: |
         python manage.py behave

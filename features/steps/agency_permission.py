@@ -3,7 +3,6 @@ from django.urls import reverse
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_201_CREATED, HTTP_200_OK
 
 from packages.models import Agency
-from packages.tests.factories import AgencyFactory
 from test_utils.views import post, patch
 from users.constants import UserType
 from users.tests.factories import UserFactory
@@ -22,11 +21,6 @@ def agency_user(context):
 @given("un usuario administrador")
 def admin_user(context):
     context.user = UserFactory(user_type=UserType.ADMIN)
-
-
-@given("una agencia")
-def agency(context):
-    context.agency = AgencyFactory(name="viejo nombre")
 
 
 @when("intenta crear una agencia")
