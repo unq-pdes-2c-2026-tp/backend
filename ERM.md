@@ -1,45 +1,5 @@
 ```mermaid
 erDiagram
-LogEntry {
-  signed_integer id pk
-  datetime action_time
-  signed_integer user_id
-  signed_integer content_type_id
-  char object_id
-  char object_repr
-  unsigned_integer action_flag
-  char change_message
-}
-Permission {
-  signed_integer id pk
-  char name
-  signed_integer content_type_id
-  char codename
-}
-Group {
-  signed_integer id pk
-  char name
-}
-ContentType {
-  signed_integer id pk
-  char app_label
-  char model
-}
-Session {
-  char session_key pk
-  char session_data
-  datetime expire_date
-}
-Token {
-  char key pk
-  signed_integer user_id
-  datetime created
-}
-TokenProxy {
-  char key pk
-  signed_integer user_id
-  datetime created
-}
 User {
   signed_integer id pk
   char password
@@ -102,11 +62,6 @@ PackageReview {
 }
 Hotel }|--|| City: ""
 PackageReview }|--|| PackagePurchase: ""
-Token ||--|| User: ""
-Group }|--|{ User: ""
-Group }|--|{ Permission: ""
-LogEntry }|--|| User: ""
-LogEntry }|--|| ContentType: ""
 PackageFavorite }|--|| Package: ""
 PackageFavorite }|--|| User: ""
 PackagePurchase }|--|| Package: ""
@@ -114,7 +69,8 @@ PackagePurchase }|--|| User: ""
 Package }|--|| Agency: ""
 Package }|--|| Hotel: ""
 Package }|--|| City: ""
-Permission }|--|{ User: ""
-Permission }|--|| ContentType: ""
+User ||--|| Token: ""
 User }|--|| Agency: ""
+User }|--|{ Group: ""
+User }|--|{ Permission: ""
 ```
