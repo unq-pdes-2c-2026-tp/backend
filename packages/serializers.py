@@ -229,7 +229,7 @@ class PackagePurchaseSerializer(serializers.ModelSerializer):
         except requests.RequestException as error:
             logger.error(f"An error ocurred when buying flight {flight_id}: {error}")
             raise serializers.ValidationError(
-                {"package": "No se pudo comunicar con el servicio de vuelos."}
+                {"package": "El vuelo no tiene disponibilidad."}
             ) from error
 
     @transaction.atomic()
