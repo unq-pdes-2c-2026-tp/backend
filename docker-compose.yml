@@ -14,7 +14,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pctv_django" ]
+      test: [ "CMD-SHELL", "mysqladmin ping --protocol=TCP -h 127.0.0.1 -P $$MYSQL_TCP_PORT --silent" ]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -42,6 +42,27 @@ services:
     depends_on:
       db_ctv:
           condition: service_healthy
+
+  k6:
+    image: grafana/k6:latest
+    profiles:
+      - load-tests
+    environment:
+      BASE_URL: ${BASE_URL:-http://ctv:${DJANGO_CTV_PORT}}
+      LOAD_TEST_ADMIN_EMAIL: ${LOAD_TEST_ADMIN_EMAIL:-admin@gmail.com}
+      LOAD_TEST_ADMIN_PASSWORD: ${LOAD_TEST_ADMIN_PASSWORD:-admin}
+      LOAD_TEST_USER_EMAIL: ${LOAD_TEST_USER_EMAIL:-user@gmail.com}
+      LOAD_TEST_USER_PASSWORD: ${LOAD_TEST_USER_PASSWORD:-user}
+      LOAD_TEST_PACKAGE_ID: ${LOAD_TEST_PACKAGE_ID:-}
+      READ_VUS: ${READ_VUS:-1}
+      READ_ITERATIONS: ${READ_ITERATIONS:-1}
+      THINK_TIME: ${THINK_TIME:-1}
+    volumes:
+      - ./load-tests:/load-tests:ro
+      - ./k6-results:/results
+    depends_on:
+      ctv:
+        condition: service_started
 
 volumes:
   mysql_data:

@@ -1,4 +1,4 @@
-import { exerciseApi } from './common.js';
+import { exerciseApi, setup } from './common.js';
 
 export const options = {
   stages: [
@@ -13,6 +13,8 @@ export const options = {
   },
 };
 
-export default function () {
-  exerciseApi();
+export { setup };
+
+export default function (data) {
+  exerciseApi(data);
 }
